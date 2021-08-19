@@ -13,7 +13,7 @@ class Board() {
     private val fields = Array(MAX_COL) { col -> Array(MAX_ROW) { row -> Field(column=col, row=row) } }
 
     private val colHeights = Array(MAX_COL) { 0 }
-    private var whiteToMove: Boolean = true
+    private var whoisToMove: Color = Color.White
 
     constructor(boardString: String) : this() {
         if (!isCorrectBoardString(boardString) ) {
@@ -23,7 +23,7 @@ class Board() {
         if (!isCorrectStoneColorBalance()) {
             throw Exception("Wrong balance of white and black stones")
         }
-        determineWhiteToMove()
+        determineWhoisToMove()
     }
 
     private fun isCorrectStoneColorBalance() : Boolean {
@@ -32,8 +32,8 @@ class Board() {
         return (nWhiteStones == nBlackStones || nWhiteStones == (nBlackStones + 1) )
     }
 
-    private fun determineWhiteToMove() {
-        whiteToMove = colHeights.sum() % 2 == 0
+    private fun determineWhoisToMove() {
+        whoisToMove = if (colHeights.sum() % 2 == 0) Color.White else Color.Black
     }
 
     private fun putStoneInColumn(column: Int, stoneColor: Color) {
@@ -93,7 +93,7 @@ class Board() {
     }
 
     private fun swapPlayerToMove() {
-        whiteToMove = !whiteToMove
+        whoisToMove = OpponentColor(whoisToMove)
     }
 
     private fun isLegalMove(column: Int):Boolean {
@@ -103,7 +103,7 @@ class Board() {
     fun doMove(column: Int) {
         if (!isLegalMove(column))
             throw Exception("Illegal move")
-        putStoneInColumn(column, if (whiteToMove) Color.White else Color.Black)
+        putStoneInColumn(column, whoisToMove)
         swapPlayerToMove()
     }
 
