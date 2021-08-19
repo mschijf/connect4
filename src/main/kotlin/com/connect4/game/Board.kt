@@ -2,12 +2,16 @@ package com.connect4.game
 
 const val MAX_COL = 7
 const val MAX_ROW = 6
-const val MAX_FIELDS = MAX_COL * MAX_ROW
-const val SEPERATOR = "_"
+
+const val SEPERATOR = '_'
+const val WHITE_CHAR = 'o'
+const val BLACK_CHAR = 'x'
+val STONE_COLOR_CHAR_SET = setOf(WHITE_CHAR, BLACK_CHAR)
 
 class Board() {
 
-    private val fields = Array<StoneColor?>(MAX_FIELDS) { null }
+    private val fields = Array(MAX_COL) { col -> Array(MAX_ROW) { row -> Field(column=col, row=row) } }
+
     private val colHeights = Array(MAX_COL) { 0 }
     private var whiteToMove: Boolean = true
 
@@ -23,8 +27,8 @@ class Board() {
     }
 
     private fun isCorrectStoneColorBalance() : Boolean {
-        val nWhiteStones = fields.filter{f -> f == StoneColor.White}.count()
-        val nBlackStones = fields.filter{f -> f == StoneColor.Black}.count()
+        val nWhiteStones = fields.sumOf { col -> col.filter {f -> f.stone == Color.White}.count() }
+        val nBlackStones = fields.sumOf { col -> col.filter {f -> f.stone == Color.Black}.count() }
         return (nWhiteStones == nBlackStones || nWhiteStones == (nBlackStones + 1) )
     }
 
@@ -32,12 +36,10 @@ class Board() {
         whiteToMove = colHeights.sum() % 2 == 0
     }
 
-    private fun putStoneInColumn(column: Int, stoneColor: StoneColor) {
-        fields[toField(column, colHeights[column])] = stoneColor
+    private fun putStoneInColumn(column: Int, stoneColor: Color) {
+        fields[column][colHeights[column]].stone = stoneColor
         ++colHeights[column]
     }
-
-    private fun toField(column: Int, row: Int): Int = column * MAX_ROW + row
 
     private fun boardStringToBoardRepresentation(boardString:String) {
         for ((columnNumber, columnString) in boardString.split(SEPERATOR).withIndex()) {
@@ -46,11 +48,11 @@ class Board() {
     }
 
     private fun setStonesFromColumnString(column: Int, columnString: String) {
-        if (columnString.isEmpty() || columnString.length == 1 && columnString[0] == '0')
+        if (columnString.isEmpty() || (columnString.length == 1 && columnString[0] == '0'))
             return
 
         for (ch in columnString) {
-            putStoneInColumn(column, charToStoneColor(ch))
+            putStoneInColumn(column, if (ch == WHITE_CHAR) Color.White else Color.Black)
         }
     }
 
@@ -68,7 +70,7 @@ class Board() {
         } else if (part.length == 1 && part[0] == '0') {
             true
         } else {
-            part.none { ch -> (ch !in StoneColorCharacterSet)}
+            part.none { ch -> (ch !in STONE_COLOR_CHAR_SET)}
         }
     }
 
@@ -85,9 +87,13 @@ class Board() {
             return "0"
         var result = ""
         for (row in 0 until colHeights[column]) {
-            result += fields[toField(column, row)]?.character
+            result += if (fields[column][row].stone == Color.White) WHITE_CHAR else BLACK_CHAR
         }
         return result
+    }
+
+    private fun swapPlayerToMove() {
+        whiteToMove = !whiteToMove
     }
 
     private fun isLegalMove(column: Int):Boolean {
@@ -97,8 +103,8 @@ class Board() {
     fun doMove(column: Int) {
         if (!isLegalMove(column))
             throw Exception("Illegal move")
-        putStoneInColumn(column, if (whiteToMove) StoneColor.White else StoneColor.Black)
-        whiteToMove = !whiteToMove
+        putStoneInColumn(column, if (whiteToMove) Color.White else Color.Black)
+        swapPlayerToMove()
     }
 
     fun getMoves(): List<Int> {
