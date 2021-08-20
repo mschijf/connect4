@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        div.gallery {
+            margin: 1px;
+            float: left;
+            width: 102px;
+        }
+        .text-clear {
+            clear: both;
+        }
+        .input-number {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            border: 1px solid grey;
+            font-size: 25px;
+        }
+
+        .dot {
+            height: 100px;
+            width: 100px;
+            background-color: white;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            border: 3px solid grey;
+            font-size: 25px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+    <body>
+
+        {{#each columns}}<div class="gallery">
+            {{#each rows}}
+                <div class="gallery"><div class="input-number"><div id="{{this}}" class="dot"></div></div></div>
+            {{/each}}
+            <div class="gallery"><button class=button onclick="doAjaxCall({{col}})">{{col}}</button></div>
+        </div>{{/each}}
+
+        <script>
+            function show(column, row, color) {
+                var elem = document.getElementById(10*column + row);
+                elem.style.backgroundColor = color
+            }
+        </script>
+
+        <script>
+            function doAjaxCall(columnNumber) {
+                var request = new XMLHttpRequest();
+                request.open("POST", "/move/" + columnNumber);
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var movePlayed = JSON.parse(this.responseText);
+                        var elem = document.getElementById(10*movePlayed.column + movePlayed.row);
+                        elem.style.backgroundColor = movePlayed.color
+                    }
+                };
+                request.send();
+            }
+        </script>
+
+    </body>
+</html>

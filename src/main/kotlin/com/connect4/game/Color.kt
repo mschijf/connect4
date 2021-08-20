@@ -4,4 +4,4 @@ enum class Color {
     White, Black, None
 }
 
-fun OpponentColor(color: Color) = if (color == Color.White) Color.Black else if (color == Color.Black) Color.White else Color.None
+fun opponentColor(color: Color) = if (color == Color.White) Color.Black else if (color == Color.Black) Color.White else Color.None
