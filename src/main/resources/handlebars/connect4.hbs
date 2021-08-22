@@ -1,27 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
     <style>
-        div.gallery {
-            margin: 1px;
-            float: left;
-            width: 102px;
-        }
-        .text-clear {
-            clear: both;
-        }
-        .input-number {
+        .square {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100px;
-            height: 100px;
+            width: 95px;
+            height: 95px;
             border: 1px solid grey;
             font-size: 25px;
+            background-color: white;
+        }
+        .squareNoBorder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 95px;
+            height: 95px;
+            font-size: 25px;
+            background-color: white;
         }
 
         .dot {
-            height: 100px;
-            width: 100px;
+            height: 95px;
+            width: 95px;
+            background-color: white;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .smalldot {
+            height: 50px;
+            width: 50px;
             background-color: white;
             border-radius: 50%;
             display: inline-block;
@@ -31,45 +41,199 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100px;
-            height: 100px;
+            width: 95px;
+            height: 40px;
             border: 3px solid grey;
             font-size: 25px;
-            background-color: #4CAF50; /* Green */
+            background-color: green;
             color: white;
             cursor: pointer;
         }
-    </style>
-    <body>
 
-        {{#each columns}}<div class="gallery">
-            {{#each rows}}
-                <div class="gallery"><div class="input-number"><div id="{{this}}" class="dot"></div></div></div>
+        table, td, th {
+            height: 1px;
+            width:  1px
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        td {
+            text-align: center;
+        }
+
+    </style>
+
+    <body onload="getBoard()">
+        <table>
+            {{#each fields}}
+            <tr>
+                {{#each this}}
+                <td><div class="square"><div id="field{{this.col}}{{this.row}}" class="dot"></div></div></td>
+                {{/each}}
+            </tr>
             {{/each}}
-            <div class="gallery"><button class=button onclick="doAjaxCall({{col}})">{{col}}</button></div>
-        </div>{{/each}}
+
+            <tr>
+                {{#each columnsPlayable}}
+                    <td><button class="button" id="colbutton{{this.col}}" onclick="executeMove({{this.col}})">^</button></td>
+                {{/each}}
+            </tr>
+        </table>
+
+        <br/><br/><br/>
+        <table>
+            <tr>
+                <td>Aan zet</td>
+                <td>Winnaar</td>
+            </tr>
+            <tr>
+                <td><div class="square"><div id="whoistomove" class="smalldot"></div></div></td>
+                <td><div class="square"><div id="winner" class="smalldot"></div></div></td>
+                <td><div class="squareNoBorder"><button id="buttonNew" onclick="newGame()">New game</button></div>
+                <td><div class="squareNoBorder"><button id="buttonCompute" onclick="computeMove()">Compute</button></div>
+                <td><div class="squareNoBorder"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div>
+            </tr>
+        </table>
+
 
         <script>
-            function show(column, row, color) {
-                var elem = document.getElementById(10*column + row);
-                elem.style.backgroundColor = color
+            function toFieldId(col, row) {
+                return "field" + col + "" + ({{numberOfRows}}-row-1)
+            }
+            function toColumnButtonId(col) {
+                return "colbutton" + col
+            }
+
+            function toColor(modelColor) {
+                if (modelColor === "White") {
+                    return "blue"
+                } else if (modelColor === "Black") {
+                    return "red"
+                } else {
+                    return "white"
+                }
+            }
+
+            function toWinnerColor(modelColor) {
+                if (modelColor === "White") {
+                    return "dodgerblue"
+                } else if (modelColor === "Black") {
+                    return "orangered"
+                } else {
+                    return "white"
+                }
+            }
+
+            function showBoard(board) {
+                showFields(board)
+                showColumnButtons(board)
+                showWhoIsToMove(board)
+                showWinner(board)
+                showActionButtons(board)
+            }
+
+            function showFields(board) {
+                for (let row = 0; row < board.fields.length; row++) {
+                    for (let col = 0; col < board.fields[row].length; col++) {
+                        var elem = document.getElementById(toFieldId(board.fields[row][col].col, board.fields[row][col].row));
+                        elem.style.backgroundColor = toColor(board.fields[row][col].color);
+                    }
+                }
+            }
+
+            function showColumnButtons(board) {
+                for (let col = 0; col < board.columnsPlayable.length; col++) {
+                    var elem = document.getElementById(toColumnButtonId(board.columnsPlayable[col].col));
+                    if (!board.columnsPlayable[col].enabled) {
+                        elem.style.backgroundColor = "grey";
+                        elem.disabled = true
+                        elem.style.cursor = "default"
+                        elem.innerText=""
+                    } else {
+                        elem.disabled = false
+                        elem.style.backgroundColor = "green";
+                        elem.style.cursor = "pointer"
+                        elem.innerText="^"
+                    }
+                }
+            }
+
+            function showWhoIsToMove(board) {
+                var elem = document.getElementById("whoistomove");
+                elem.style.backgroundColor = toColor(board.colorToMove);
+            }
+
+            function showActionButtons(board) {
+                document.getElementById("buttonCompute").disabled = board.gameFinished
+            }
+
+            function showWinner(board) {
+                var elem = document.getElementById("winner");
+                if (board.gameFinished) {
+                    elem.style.backgroundColor = toColor(board.colorHasWon);
+                    for (let i = 0; i < board.winningFields.length; i++) {
+                        var fieldElem = document.getElementById(toFieldId(board.winningFields[i].col, board.winningFields[i].row));
+                        fieldElem.style.backgroundColor = toWinnerColor(board.colorHasWon);
+                    }
+                } else {
+                    elem.style.backgroundColor = "white";
+                }
             }
         </script>
 
+
         <script>
-            function doAjaxCall(columnNumber) {
+            function executeMove(columnNumber) {
                 var request = new XMLHttpRequest();
                 request.open("POST", "/move/" + columnNumber);
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
-                        var movePlayed = JSON.parse(this.responseText);
-                        var elem = document.getElementById(10*movePlayed.column + movePlayed.row);
-                        elem.style.backgroundColor = movePlayed.color
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function computeMove() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "/move/compute/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function getBoard() {
+                var request = new XMLHttpRequest();
+                request.open("GET", "/board/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function newGame() {
+                var request = new XMLHttpRequest();
+                request.open("POST",    "/board/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
                     }
                 };
                 request.send();
             }
         </script>
+
 
     </body>
 </html>

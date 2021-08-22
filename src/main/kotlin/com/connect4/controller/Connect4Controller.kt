@@ -1,7 +1,7 @@
 package com.connect4.controller
 
+import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
-import com.connect4.game.Color
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Template
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader
@@ -12,31 +12,40 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class MessageResource {
+class Connect4Controller {
 
-    val board = Board()
+    var board = Board()
 
     @GetMapping("/")
     fun index(): String {
         val loader: TemplateLoader = ClassPathTemplateLoader("/handlebars", ".hbs")
         val handlebars = Handlebars(loader)
         val template: Template = handlebars.compile("connect4")
+        return template.apply(BoardModel(board))
+    }
 
-        val columns = listOf(Rows(0), Rows(1), Rows(2), Rows(3), Rows(4), Rows(5), Rows(6))
-        val s = template.apply(Columns(columns))
-        return s
+    @GetMapping("/board/")
+    fun getBoard(): BoardModel {
+        return BoardModel(board)
+    }
+
+    @PostMapping("/board/")
+    fun newBoard(): BoardModel {
+        board = Board()
+        return BoardModel(board)
     }
 
     @PostMapping("/move/{column}")
-    fun doMove(@PathVariable(name = "column") column: Int): MovePlayed {
-        val mvp = board.doMove(column)
-        return MovePlayed(mvp.column, mvp.row, if (mvp.color == Color.White) "blue" else "red")
+    fun doMove(@PathVariable(name = "column") column: Int): BoardModel {
+        board.doMove(column)
+        return BoardModel(board)
+    }
+
+    @PostMapping("/move/compute")
+    fun computeAndExecuteNextMove(): BoardModel {
+        val mvp = board.computeMove()
+        board.doMove(mvp.column)
+        return BoardModel(board)
     }
 }
 
-data class Columns(val columns: List<Rows>)
-class Rows(val col:Int) {
-    val rows = Array<Int>(6)  {i -> col * 10 + (5-i) }
-}
-
-data class MovePlayed(val column: Int, val row: Int, val color: String)

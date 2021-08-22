@@ -14,9 +14,9 @@ class Board() {
 
     private val fields = Array(MAX_COL) { col -> Array(MAX_ROW) { row -> Field(column=col, row=row) } }
     private val colHeights = Array(MAX_COL) { 0 }
-    private var allGroups = mutableListOf<Group>()
-    private var whoisToMove: Color = Color.White
+    private val allGroups = mutableListOf<Group>()
     private val movesPlayedStack = Stack<MovePlayed>()
+    var whoisToMove: Color = Color.White ; private set
 
     init {
         createHorizontalGroups()
@@ -143,7 +143,7 @@ class Board() {
     }
 
     private fun addMovePlayed(column: Int) {
-        movesPlayedStack.push(MovePlayed(column, colHeights[column], whoisToMove))
+        movesPlayedStack.push(MovePlayed(column))
     }
 
     fun doMove(column: Int): MovePlayed  {
@@ -156,12 +156,51 @@ class Board() {
     }
 
     fun getMoves(): List<Int> {
+        if (colorHasWon(Color.White) || colorHasWon(Color.Black))
+            return emptyList()
         return colHeights.withIndex().filter { (_,height) -> height < MAX_ROW }.map { (column, _) -> column}
     }
 
+    private fun colorHasWon(color: Color): Boolean {
+        return allGroups.any { grp -> grp.completeWithColor(color) }
+    }
+
     fun playerToMoveHasLost(): Boolean {
-        return allGroups.any { grp -> grp.completeWithColor(opponentColor(whoisToMove)) }
+        return colorHasWon(opponentColor(whoisToMove))
+    }
+
+    private fun determineWinner() : Color {
+        return if (colorHasWon(Color.White))
+            Color.White
+        else if (colorHasWon(Color.Black))
+            Color.Black
+        else
+            Color.None
+    }
+
+    fun gameFinished(): Boolean {
+        return getMoves().isEmpty()
+    }
+
+    fun getStoneColor(col: Int, row: Int) = fields[col][row].stone
+
+    fun getWinningFields(): List<Coordinate> {
+        val winner = determineWinner()
+        if (winner != Color.None) {
+            return allGroups.first { grp -> grp.completeWithColor(winner) }.fields.map { f -> Coordinate(f.column, f.row) }
+        }
+        return emptyList()
+    }
+
+    fun computeMove() : MovePlayed {
+        val rnd = Random()
+        val legalMoves = getMoves()
+        val index = rnd.nextInt(legalMoves.size)
+        val columnToPlay = legalMoves[index]
+        return MovePlayed(columnToPlay)
     }
 }
+
+
 
 
