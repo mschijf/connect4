@@ -1,6 +1,7 @@
 package com.connect4.game
 
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 const val MAX_COL = 7
 const val MAX_ROW = 6
@@ -14,8 +15,8 @@ class Board() {
 
     private val fields = Array(MAX_COL) { col -> Array(MAX_ROW) { row -> Field(column=col, row=row) } }
     private val colHeights = Array(MAX_COL) { 0 }
-    private val allGroups = mutableListOf<Group>()
-    private val movesPlayedStack = Stack<MovePlayed>()
+    val allGroups = mutableListOf<Group>()
+    private val fieldsPlayedStack = Stack<Field>()
     var whoisToMove: Color = Color.White ; private set
 
     init {
@@ -80,9 +81,16 @@ class Board() {
         whoisToMove = if (colHeights.sum() % 2 == 0) Color.White else Color.Black
     }
 
-    private fun putStoneInColumn(column: Int, stoneColor: Color) {
-        fields[column][colHeights[column]].stone = stoneColor
+    private fun putStoneInColumn(column: Int, stoneColor: Color): Field {
+        val field = fields[column][colHeights[column]]
+        field.stone = stoneColor
         ++colHeights[column]
+        return field
+    }
+
+    private fun removeStoneFromColumn(column: Int) {
+        --colHeights[column]
+        fields[column][colHeights[column]].stone = Color.None
     }
 
     private fun boardStringToBoardRepresentation(boardString:String) {
@@ -142,17 +150,30 @@ class Board() {
         return (column in 0 until MAX_COL) && (colHeights[column] < MAX_ROW)
     }
 
-    private fun addMovePlayed(column: Int) {
-        movesPlayedStack.push(MovePlayed(column))
+    private fun addFieldPlayed(field: Field) {
+        fieldsPlayedStack.push(field)
     }
 
-    fun doMove(column: Int): MovePlayed  {
+    fun doMove(column: Int): Coordinate  {
         if (!isLegalMove(column))
             throw Exception("Illegal move")
-        addMovePlayed(column)
-        putStoneInColumn(column, whoisToMove)
+        val fieldPlayed = putStoneInColumn(column, whoisToMove)
         swapPlayerToMove()
-        return movesPlayedStack.peek()
+
+        addFieldPlayed(fieldPlayed)
+        return Coordinate(fieldPlayed.column, fieldPlayed.row)
+    }
+
+    fun undoMove()  {
+        if (fieldsPlayedStack.isEmpty())
+            throw Exception("Illegal takeback action")
+        val column = fieldsPlayedStack.pop().column
+        removeStoneFromColumn(column)
+        swapPlayerToMove()
+    }
+
+    fun lastFieldPlayed() : Coordinate? {
+        return if(fieldsPlayedStack.isEmpty()) null else Coordinate(fieldsPlayedStack.peek().column, fieldsPlayedStack.peek().row)
     }
 
     fun getMoves(): List<Int> {
@@ -192,13 +213,6 @@ class Board() {
         return emptyList()
     }
 
-    fun computeMove() : MovePlayed {
-        val rnd = Random()
-        val legalMoves = getMoves()
-        val index = rnd.nextInt(legalMoves.size)
-        val columnToPlay = legalMoves[index]
-        return MovePlayed(columnToPlay)
-    }
 }
 
 

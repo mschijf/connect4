@@ -17,7 +17,7 @@
             align-items: center;
             width: 95px;
             height: 95px;
-            font-size: 25px;
+            font-size: 14px;
             background-color: white;
         }
 
@@ -25,6 +25,7 @@
             height: 95px;
             width: 95px;
             background-color: white;
+            color: white;
             border-radius: 50%;
             display: inline-block;
         }
@@ -94,9 +95,9 @@
                 <td><div class="squareNoBorder"><button id="buttonNew" onclick="newGame()">New game</button></div>
                 <td><div class="squareNoBorder"><button id="buttonCompute" onclick="computeMove()">Compute</button></div>
                 <td><div class="squareNoBorder"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div>
+                <td><div class="squareNoBorder"><input checked type="checkbox" id="useComputerPlayer" name="useComp" value="useComp"><label for="useComp"> Play vs Computer</label></div>
             </tr>
         </table>
-
 
         <script>
             function toFieldId(col, row) {
@@ -120,7 +121,7 @@
                 if (modelColor === "White") {
                     return "dodgerblue"
                 } else if (modelColor === "Black") {
-                    return "orangered"
+                    return "gold"
                 } else {
                     return "white"
                 }
@@ -128,6 +129,7 @@
 
             function showBoard(board) {
                 showFields(board)
+                showLastFieldPlayed(board)
                 showColumnButtons(board)
                 showWhoIsToMove(board)
                 showWinner(board)
@@ -137,8 +139,9 @@
             function showFields(board) {
                 for (let row = 0; row < board.fields.length; row++) {
                     for (let col = 0; col < board.fields[row].length; col++) {
-                        var elem = document.getElementById(toFieldId(board.fields[row][col].col, board.fields[row][col].row));
+                        var elem = document.getElementById(toFieldId(col, row));
                         elem.style.backgroundColor = toColor(board.fields[row][col].color);
+                        elem.innerText=""
                     }
                 }
             }
@@ -160,6 +163,24 @@
                 }
             }
 
+            function showLastFieldPlayed(board) {
+                if (board.lastFieldPlayed != null) {
+                    var elem = document.getElementById(toFieldId(board.lastFieldPlayed.col, board.lastFieldPlayed.row));
+                    elem.innerText = "*"
+                }
+            }
+
+            function disableAllButtons() {
+                for (let col = 0; col < {{numberOfColumns}}; col++) {
+                    var elem = document.getElementById(toColumnButtonId(col));
+                    elem.style.backgroundColor = "grey";
+                    elem.disabled = true
+                    elem.style.cursor = "default"
+                }
+                document.getElementById("buttonCompute").disabled = true
+                document.getElementById("buttonTakeback").disabled = true
+            }
+
             function showWhoIsToMove(board) {
                 var elem = document.getElementById("whoistomove");
                 elem.style.backgroundColor = toColor(board.colorToMove);
@@ -167,6 +188,7 @@
 
             function showActionButtons(board) {
                 document.getElementById("buttonCompute").disabled = board.gameFinished
+                document.getElementById("buttonTakeback").disabled = !board.takeBackPossible
             }
 
             function showWinner(board) {
@@ -192,12 +214,29 @@
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
                         showBoard(board);
+                        var useComputer = document.getElementById("useComputerPlayer").checked
+                        if (!board.gameFinished && useComputer) {
+                            computeMove()
+                        }
+                    }
+                };
+                request.send();
+            }
+
+            function takebackLastMove() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "/move/takeback/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
                     }
                 };
                 request.send();
             }
 
             function computeMove() {
+                disableAllButtons()
                 var request = new XMLHttpRequest();
                 request.open("POST", "/move/compute/");
                 request.onreadystatechange = function() {

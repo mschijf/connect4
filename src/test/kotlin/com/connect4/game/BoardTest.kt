@@ -48,7 +48,7 @@ internal class BoardTest {
         assertEquals ( Board("o______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
         assertEquals ( Board("xo______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
         assertEquals ( Board("xoxoxo______").getMoves(), listOf(1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("xoxoxo_xoxoxo__xoxoxo_xoxoxo_xoxoxo_xoxoxo").getMoves(), listOf(2) )
+        assertEquals ( Board("xoxoxo_oxoxox__xxxooo_oooxxx_xxxooo_oooxxx").getMoves(), listOf(2) )
         assertEquals ( Board("xoxoxo_x_xoxoxo_o_xoxoxo__xoxoxo").getMoves(), listOf(1,3,5) )
         assertEquals ( Board("xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo").getMoves(), emptyList<Int>() )
     }

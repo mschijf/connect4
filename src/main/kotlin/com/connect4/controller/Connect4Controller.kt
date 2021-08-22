@@ -2,6 +2,7 @@ package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
+import com.connect4.game.Genius
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Template
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader
@@ -41,11 +42,19 @@ class Connect4Controller {
         return BoardModel(board)
     }
 
+    @PostMapping("/move/takeback/")
+    fun takeBackLastMove(): BoardModel {
+        board.undoMove()
+        return BoardModel(board)
+    }
+
     @PostMapping("/move/compute")
     fun computeAndExecuteNextMove(): BoardModel {
-        val mvp = board.computeMove()
+        val mvp = Genius(board).computeMove()
         board.doMove(mvp.column)
         return BoardModel(board)
     }
+
+
 }
 
