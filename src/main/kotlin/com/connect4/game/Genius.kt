@@ -1,10 +1,12 @@
 package com.connect4.game
 
-class Genius(private val board: Board) {
+class Genius(board: Board) {
+    //copy board in order to prevent it from changing the board hat is connected for other purpopses (for instance front end)
+    val board = Board(board.toString())
 
-    fun computeMove() : MovePlayed {
-        val result = alfabeta(5, -10000, 10000)
-        return MovePlayed(result.column!!)
+    fun computeMove() : SearchResult {
+        val result = alfabeta(5, -1000000, 1000000)
+        return result
     }
 
     private fun alfabeta(depth:Int, alfa: Int, beta: Int): SearchResult {
@@ -33,7 +35,7 @@ class Genius(private val board: Board) {
     }
 
     private fun endValue(depth: Int): Int {
-        return if (board.playerToMoveHasLost()) -(10000 + depth) else 0
+        return if (board.playerToMoveHasLost()) -(1000 + depth) else 0
     }
 
     private fun evaluate(): Int {

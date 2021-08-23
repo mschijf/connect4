@@ -1,7 +1,6 @@
 package com.connect4.game
 
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
 
 const val MAX_COL = 7
 const val MAX_ROW = 6
@@ -154,6 +153,19 @@ class Board() {
         fieldsPlayedStack.push(field)
     }
 
+    private fun colorHasWon(color: Color): Boolean {
+        return allGroups.any { grp -> grp.completeWithColor(color) }
+    }
+
+    private fun determineWinner() : Color? {
+        return if (colorHasWon(Color.White))
+            Color.White
+        else if (colorHasWon(Color.Black))
+            Color.Black
+        else
+            null
+    }
+
     fun doMove(column: Int): Coordinate  {
         if (!isLegalMove(column))
             throw Exception("Illegal move")
@@ -182,21 +194,8 @@ class Board() {
         return colHeights.withIndex().filter { (_,height) -> height < MAX_ROW }.map { (column, _) -> column}
     }
 
-    private fun colorHasWon(color: Color): Boolean {
-        return allGroups.any { grp -> grp.completeWithColor(color) }
-    }
-
     fun playerToMoveHasLost(): Boolean {
         return colorHasWon(opponentColor(whoisToMove))
-    }
-
-    private fun determineWinner() : Color {
-        return if (colorHasWon(Color.White))
-            Color.White
-        else if (colorHasWon(Color.Black))
-            Color.Black
-        else
-            Color.None
     }
 
     fun gameFinished(): Boolean {
@@ -207,7 +206,7 @@ class Board() {
 
     fun getWinningFields(): List<Coordinate> {
         val winner = determineWinner()
-        if (winner != Color.None) {
+        if (winner != null) {
             return allGroups.first { grp -> grp.completeWithColor(winner) }.fields.map { f -> Coordinate(f.column, f.row) }
         }
         return emptyList()
