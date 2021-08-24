@@ -58,6 +58,19 @@ class Genius(board: Board) {
         else
             blackValue - whiteValue
     }
+
+    //todo fields teruggeven vanuit domoves ipv columns?
+    //todo: field nodig in api
+    private fun generateMoves() : List<Int> {
+        val moves=board.getMoves()
+//        for (move in moves) {
+//            if (board.getField(move).isThread(Color.White) || board.isThread(Color.Black)) {
+//                return listOf(move)
+//            }
+//        }
+        return moves
+    }
 }
+
 
 class SearchResult (val column: Int?, val evaluationValue: Int)

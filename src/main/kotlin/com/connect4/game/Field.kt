@@ -7,4 +7,8 @@ class Field (val column: Int, val row: Int) {
     fun addGroup (group: Group) {
         groupList.add(group)
     }
+
+    fun isThread(color: Color): Boolean {
+        return groupList.any {grp -> grp.countOfColor(color) == CONNECT_NUMBER-1}
+    }
 }

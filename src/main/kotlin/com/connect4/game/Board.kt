@@ -4,6 +4,7 @@ import java.util.*
 
 const val MAX_COL = 7
 const val MAX_ROW = 6
+const val CONNECT_NUMBER = 4
 
 const val SEPERATOR = '_'
 const val WHITE_CHAR = 'o'
@@ -26,7 +27,7 @@ class Board() {
     }
 
     private fun createHorizontalGroups() {
-        for (col in 0 until MAX_COL - (4-1)) {
+        for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW) {
                 createGroup(listOf(fields[col][row], fields[col+1][row], fields[col+2][row], fields[col+3][row]))
             }
@@ -34,21 +35,21 @@ class Board() {
     }
     private fun createVerticalGroups() {
         for (col in 0 until MAX_COL) {
-            for (row in 0 until MAX_ROW - (4-1)) {
+            for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
                 createGroup(listOf(fields[col][row], fields[col][row+1], fields[col][row+2], fields[col][row+3]))
             }
         }
     }
     private fun createDiagonalSWNEGroups() {
-        for (col in 0 until MAX_COL - (4-1)) {
-            for (row in 0 until MAX_ROW - (4-1)) {
+        for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
+            for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
                 createGroup(listOf(fields[col][row], fields[col+1][row+1], fields[col+2][row+2], fields[col+3][row+3]))
             }
         }
     }
     private fun createDiagonalNWSEGroups() {
-        for (col in 0 until MAX_COL - (4-1)) {
-            for (row in MAX_ROW-1 downTo (4-1)) {
+        for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
+            for (row in MAX_ROW-1 downTo (CONNECT_NUMBER-1)) {
                 createGroup(listOf(fields[col][row], fields[col+1][row-1], fields[col+2][row-2], fields[col+3][row-3]))
             }
         }
@@ -166,14 +167,13 @@ class Board() {
             null
     }
 
-    fun doMove(column: Int): Coordinate  {
+    fun doMove(column: Int) {
         if (!isLegalMove(column))
             throw Exception("Illegal move")
         val fieldPlayed = putStoneInColumn(column, whoisToMove)
         swapPlayerToMove()
 
         addFieldPlayed(fieldPlayed)
-        return Coordinate(fieldPlayed.column, fieldPlayed.row)
     }
 
     fun undoMove()  {

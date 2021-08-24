@@ -188,7 +188,7 @@
 
             function showComputerResult(searchResult) {
                 if (searchResult != null) {
-                    document.getElementById("computerMove").innerText = searchResult.column
+                    document.getElementById("computerMove").innerText = String.fromCharCode(65 + searchResult.column)
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue
                 } else {
                     document.getElementById("computerMove").innerText = ""
