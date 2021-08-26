@@ -29,33 +29,33 @@ class Board() {
     private fun createHorizontalGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW) {
-                createGroup(listOf(fields[col][row], fields[col+1][row], fields[col+2][row], fields[col+3][row]))
+                createGroup(listOf(fields[col][row], fields[col+1][row], fields[col+2][row], fields[col+3][row]), GroupType.horizontal)
             }
         }
     }
     private fun createVerticalGroups() {
         for (col in 0 until MAX_COL) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col][row+1], fields[col][row+2], fields[col][row+3]))
+                createGroup(listOf(fields[col][row], fields[col][row+1], fields[col][row+2], fields[col][row+3]), GroupType.vertical)
             }
         }
     }
     private fun createDiagonalSWNEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col+1][row+1], fields[col+2][row+2], fields[col+3][row+3]))
+                createGroup(listOf(fields[col][row], fields[col+1][row+1], fields[col+2][row+2], fields[col+3][row+3]), GroupType.diagonalSWNE)
             }
         }
     }
     private fun createDiagonalNWSEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in MAX_ROW-1 downTo (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col+1][row-1], fields[col+2][row-2], fields[col+3][row-3]))
+                createGroup(listOf(fields[col][row], fields[col+1][row-1], fields[col+2][row-2], fields[col+3][row-3]), GroupType.diagonalNWSE)
             }
         }
     }
-    private fun createGroup(fieldList: List<Field>) { //f1: Field, f2: Field, f3: Field, f4: Field
-        val group = Group(fieldList)
+    private fun createGroup(fieldList: List<Field>, groupType: GroupType) { //f1: Field, f2: Field, f3: Field, f4: Field
+        val group = Group(fieldList, groupType)
         allGroups.add(group)
         fieldList.forEach { f -> f.addGroup(group)}
     }
@@ -192,6 +192,10 @@ class Board() {
         if (colorHasWon(Color.White) || colorHasWon(Color.Black))
             return emptyList()
         return colHeights.withIndex().filter { (_,height) -> height < MAX_ROW }.map { (column, _) -> column}
+    }
+
+    fun getPlayableField(column: Int) : Field {
+        return fields[column][colHeights[column]]
     }
 
     fun playerToMoveHasLost(): Boolean {

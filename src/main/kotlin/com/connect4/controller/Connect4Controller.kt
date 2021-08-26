@@ -48,13 +48,13 @@ class Connect4Controller {
         return BoardModel(board)
     }
 
-    @PostMapping("/move/compute/")
-    fun computeAndExecuteNextMove(): BoardModel {
-        val searchResult = Genius(board).computeMove()
-        if (searchResult.column == null) {
+    @PostMapping("/move/compute/{level}")
+    fun computeAndExecuteNextMove(@PathVariable(name = "level") level: Int): BoardModel {
+        val searchResult = Genius(board).computeMove(level)
+        if (searchResult.moveSequence.isEmpty()) {
             throw Exception("No move calculated")
         }
-        board.doMove(searchResult.column)
+        board.doMove(searchResult.moveSequence.first())
         return BoardModel(board, searchResult)
     }
 

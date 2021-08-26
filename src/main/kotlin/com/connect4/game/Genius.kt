@@ -1,37 +1,50 @@
 package com.connect4.game
 
+import java.time.Duration
+import java.time.Instant
+
 class Genius(board: Board) {
     //copy board in order to prevent it from changing the board hat is connected for other purpopses (for instance front end)
-    val board = Board(board.toString())
+    private val board = Board(board.toString())
+    private var nodesVisited = 0
+    private val killer = Array(42)  {-1}
 
-    fun computeMove() : SearchResult {
-        val result = alfabeta(5, -1000000, 1000000)
-        return result
+    fun computeMove(level:Int) : SearchResult {
+        nodesVisited = 0
+        val start = Instant.now()
+        val result = alfabeta(level, 0, -1000000, 1000000)
+        return SearchResult(result, nodesVisited, Duration.between(start, Instant.now()).toMillis())
     }
 
-    private fun alfabeta(depth:Int, alfa: Int, beta: Int): SearchResult {
+    private fun alfabeta(depth:Int, ply: Int, alfa: Int, beta: Int): InternalSearchResult {
+        ++nodesVisited
         if (board.gameFinished()) {
-            return SearchResult(null, endValue(depth))
+            return InternalSearchResult("", endValue(depth))
         }
         if (depth <= 0) {
-            return SearchResult(null, evaluate())
+            return InternalSearchResult("", evaluate())
         }
         var bestValue = alfa
         var bestMove:Int? = null
-        val moves=board.getMoves()
+        var bestMoveSequence = ""
+        val moves=generateMoves(killer[ply])
+        val newDepth = depth - 1  //if (moves.size == 1) depth else depth-1
         for (move in moves) {
             board.doMove(move)
-            val value = -alfabeta(depth-1, -beta, -bestValue).evaluationValue
+            val searchResult = alfabeta(newDepth, ply+1, -beta, -bestValue)
+            val value = -searchResult.evaluationValue
             board.undoMove()
             if (value > bestValue) {
                 bestValue = value
                 bestMove = move
+                bestMoveSequence = searchResult.moveSequence
                 if (bestValue > beta) {
+                    killer[ply] = move
                     break
                 }
             }
         }
-        return SearchResult(bestMove, bestValue)
+        return InternalSearchResult(bestMove.toString() + bestMoveSequence, bestValue)
     }
 
     private fun endValue(depth: Int): Int {
@@ -42,15 +55,23 @@ class Genius(board: Board) {
         var whiteValue = 0
         var blackValue = 0
         for (group in board.allGroups) {
-            when (group.countOfColor(Color.White)) {
-                1 -> whiteValue += 1
-                2 -> whiteValue += 3
-                3 -> whiteValue += 7
-            }
-            when (group.countOfColor(Color.Black)) {
-                1 -> blackValue += 1
-                2 -> blackValue += 3
-                3 -> blackValue += 7
+            if (group.groupType != GroupType.vertical) {
+                val whiteCount = group.countOfColor(Color.White)
+                val blackCount = group.countOfColor(Color.Black)
+                if (blackCount == 0) {
+                    when (whiteCount) {
+                        1 -> whiteValue += 1
+                        2 -> whiteValue += 3
+                        3 -> whiteValue += 7
+                    }
+                }
+                if (whiteCount == 0) {
+                    when (blackCount) {
+                        1 -> blackValue += 1
+                        2 -> blackValue += 3
+                        3 -> blackValue += 7
+                    }
+                }
             }
         }
         return if (board.whoisToMove == Color.White)
@@ -59,18 +80,20 @@ class Genius(board: Board) {
             blackValue - whiteValue
     }
 
-    //todo fields teruggeven vanuit domoves ipv columns?
-    //todo: field nodig in api
-    private fun generateMoves() : List<Int> {
+    //todo: killer moet met (colum, row) --> alleen column is niet goed.
+    private fun generateMoves(killerMove: Int) : List<Int> {
         val moves=board.getMoves()
-//        for (move in moves) {
-//            if (board.getField(move).isThread(Color.White) || board.isThread(Color.Black)) {
-//                return listOf(move)
-//            }
-//        }
-        return moves
+        for (move in moves) {
+            if (board.getPlayableField(move).isThread(Color.White) || board.getPlayableField(move).isThread(Color.Black)) {
+                return listOf(move)
+            }
+        }
+        return moves.sortedBy {it != killerMove}
     }
 }
 
-
-class SearchResult (val column: Int?, val evaluationValue: Int)
+data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
+class SearchResult (internalSearchResult: InternalSearchResult, val nodesVisited: Int, val durationMillis: Long){
+    val moveSequence: List<Int> = internalSearchResult.moveSequence.map{ ch -> ch.code - '0'.code }.toList()
+    val evaluationValue = internalSearchResult.evaluationValue
+}

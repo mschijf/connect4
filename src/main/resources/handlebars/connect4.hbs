@@ -51,6 +51,8 @@
 
     </style>
 
+<!--    flexcontainer-->
+
     <body onload="getBoard()">
         <div class="grid-container">
             <div class="grid-item">
@@ -75,11 +77,11 @@
                     <tr>
                         <td><div class="square"><div id="whoistomove" class="smalldot"></div></div></td>
                         <td><div class="square"><div id="winner" class="smalldot"></div></div></td>
-                        <td><div class="square"><button id="buttonNew" onclick="newGame()">New game</button></div>
-                        <td><div class="square"><button id="buttonCompute" onclick="computeMove()">Compute</button></div>
-                        <td><div class="square"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div>
-                        <td><div class="square"><input checked type="checkbox" id="useComputerPlayer" name="useComp" value="useComp"><label for="useComp"> Play vs Computer</label></div>
-                        <td><div class="square"></div>
+                        <td><div class="square"><button id="buttonNew" onclick="newGame()">New game</button></div></td>
+                        <td><div class="square"><button id="buttonCompute" onclick="computeMove()">Compute</button></div></td>
+                        <td><div class="square"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div></td>
+                        <td><div class="square"><input checked type="checkbox" id="useComputerPlayer" name="useComp" value="useComp"><label for="useComp"> Play vs Computer</label></div></td>
+                        <td><div class="square"><input type="number" id="searchDepth" min="1" max="42" step="1" value="5" size="6"></div></td>
                     </tr>
                 </table>
             </div>
@@ -93,6 +95,14 @@
                         <td class="tableleft"><b>Computer Move:</b></td>
                         <td class="tableleft" id="computerMove"></td>
                     </tr>
+                    <tr>
+                        <td class="tableleft"><b>nodes:</b></td>
+                        <td class="tableleft" id="nodesCount"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>time:</b></td>
+                        <td class="tableleft" id="timeSpend"></td>
+                    </tr>
                 </table>
             </div>
         </div>
@@ -100,9 +110,24 @@
         <script>
             function toFieldId(col, row) {
                 return "field" + col + "" + ({{numberOfRows}}-row-1)
+                // return `field${col}${numberOfRows-row-1}`
             }
             function toColumnButtonId(col) {
                 return "colbutton" + col
+            }
+
+            function setElementColor(element, modelColor)
+            {
+                if (modelColor === "White") {
+                    element.style.backgroundColor = "yellow"
+                    element.style.color = "red"
+                } else if (modelColor === "Black") {
+                    element.style.backgroundColor = "red"
+                    element.style.color = "yellow"
+                } else {
+                    element.style.backgroundColor = "white"
+                    element.style.color = "black"
+                }
             }
 
             function toColor(modelColor) {
@@ -135,10 +160,14 @@
             }
 
             function showFields(board) {
+                // board.fields.forEach((field, index) => {
+                //     field.row
+                // }));
                 for (let row = 0; row < board.fields.length; row++) {
                     for (let col = 0; col < board.fields[row].length; col++) {
                         var elem = document.getElementById(toFieldId(col, row));
-                        elem.style.backgroundColor = toColor(board.fields[row][col].color);
+                        // elem.style.backgroundColor = toColor(board.fields[row][col].color);
+                        setElementColor(elem, board.fields[row][col].color)
                         elem.innerText=""
                         if (board.fields[row][col].playable) {
                             elem.style.cursor = "pointer"
@@ -179,7 +208,7 @@
                     elem.style.backgroundColor = toColor(board.colorHasWon);
                     for (let i = 0; i < board.winningFields.length; i++) {
                         var fieldElem = document.getElementById(toFieldId(board.winningFields[i].col, board.winningFields[i].row));
-                        fieldElem.style.backgroundColor = toWinnerColor(board.colorHasWon);
+                        fieldElem.innerText = "**"
                     }
                 } else {
                     elem.style.backgroundColor = "white";
@@ -188,11 +217,22 @@
 
             function showComputerResult(searchResult) {
                 if (searchResult != null) {
-                    document.getElementById("computerMove").innerText = String.fromCharCode(65 + searchResult.column)
+                    s = ""
+                    for (let i = 0; i < searchResult.moveSequence.length; i++) {
+                        if (i > 0) {
+                            s = s + "-"
+                        }
+                        s = s + String.fromCharCode(65 + searchResult.moveSequence[i])
+                    }
+                    document.getElementById("computerMove").innerText = s
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue
+                    document.getElementById("nodesCount").innerText = searchResult.nodesVisited
+                    document.getElementById("timeSpend").innerText = searchResult.durationMillis
                 } else {
                     document.getElementById("computerMove").innerText = ""
                     document.getElementById("evaluationValue").innerText = ""
+                    document.getElementById("nodesCount").innerText = ""
+                    document.getElementById("timeSpend").innerText = ""
                 }
             }
         </script>
@@ -230,7 +270,7 @@
             function computeMove() {
                 disableAllButtons()
                 var request = new XMLHttpRequest();
-                request.open("POST", "/move/compute/");
+                request.open("POST", "/move/compute/"+document.getElementById("searchDepth").value);
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -242,6 +282,7 @@
 
             function getBoard() {
                 var request = new XMLHttpRequest();
+
                 request.open("GET", "/board/");
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
@@ -251,6 +292,23 @@
                 };
                 request.send();
             }
+
+            // const fetchBoardAsync = () => {
+                // mdn fetch
+                // return fetch('/board/', {
+                    // method: 'GET'
+                    // headers:
+                // }).then(response => response).then
+            // }
+
+            // const getBoardAsync = async () => {
+            //     const response = await fetchBoardAsync();
+            //     console.log(response);
+            //     // ...
+            // }
+
+
+
 
             function newGame() {
                 var request = new XMLHttpRequest();
