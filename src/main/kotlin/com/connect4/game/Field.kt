@@ -16,4 +16,8 @@ class Field (val fieldIndex: Int) {
     fun isThread(color: Color): Boolean {
         return stone == Color.None && groupList.any { grp -> grp.countOfColor(color) == CONNECT_NUMBER-1}
     }
+
+    fun isPartOfCompleteGroupOfOneColor() : Boolean {
+        return stone != Color.None && groupList.any { grp -> grp.countOfColor(stone) == CONNECT_NUMBER }
+    }
 }

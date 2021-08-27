@@ -20,7 +20,7 @@ class Genius(board: Board) {
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = result.moveSequence
             .split('-')
-            .filter{s -> !s.isEmpty()}
+            .filter{s -> s.isNotEmpty()}
             .map{ s -> toCoordinate(s.toInt()) }
             .toList()
         return SearchResult(moveList, result.evaluationValue, nodesVisited, timePassed)
@@ -65,7 +65,7 @@ class Genius(board: Board) {
         var whiteValue = 0
         var blackValue = 0
         for (group in board.allGroups) {
-            if (group.groupType != GroupType.vertical) {
+            if (group.groupType != GroupType.Vertical) {
                 val whiteCount = group.countOfColor(Color.White)
                 val blackCount = group.countOfColor(Color.Black)
                 if (blackCount == 0) {
@@ -90,7 +90,6 @@ class Genius(board: Board) {
             blackValue - whiteValue
     }
 
-    //todo: killer moet met (column, row) --> alleen column is niet goed.
     private fun generateMoves(killerMove: Int) : List<Int> {
         val moves=board.getMoves()
         for (move in moves) {

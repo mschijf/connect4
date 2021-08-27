@@ -25,6 +25,7 @@ class Board() {
     val allGroups = mutableListOf<Group>()
     private val fieldIndexesPlayedStack = Stack<Int>()
     var whoisToMove: Color = Color.White ; private set
+    private var stoneCount = 0
 
     init {
         createHorizontalGroups()
@@ -36,28 +37,28 @@ class Board() {
     private fun createHorizontalGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW) {
-                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row)], fields[toFieldIndex(col+2, row)], fields[toFieldIndex(col+3, row)]), GroupType.horizontal)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row)], fields[toFieldIndex(col+2, row)], fields[toFieldIndex(col+3, row)]), GroupType.Horizontal)
             }
         }
     }
     private fun createVerticalGroups() {
         for (col in 0 until MAX_COL) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col, row+1)], fields[toFieldIndex(col, row+2)], fields[toFieldIndex(col, row+3)]), GroupType.vertical)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col, row+1)], fields[toFieldIndex(col, row+2)], fields[toFieldIndex(col, row+3)]), GroupType.Vertical)
             }
         }
     }
     private fun createDiagonalSWNEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row+1)], fields[toFieldIndex(col+2, row+2)], fields[toFieldIndex(col+3, row+3)]), GroupType.diagonalSWNE)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row+1)], fields[toFieldIndex(col+2, row+2)], fields[toFieldIndex(col+3, row+3)]), GroupType.DiagonalSWNE)
             }
         }
     }
     private fun createDiagonalNWSEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in MAX_ROW-1 downTo (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row-1)], fields[toFieldIndex(col+2, row-2)], fields[toFieldIndex(col+3, row-3)]), GroupType.diagonalNWSE)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row-1)], fields[toFieldIndex(col+2, row-2)], fields[toFieldIndex(col+3, row-3)]), GroupType.DiagonalNWSE)
             }
         }
     }
@@ -149,11 +150,13 @@ class Board() {
     private fun fillField(fieldIndex: Int, stoneColor: Color) {
         fields[fieldIndex].stone = stoneColor
         playableFieldIndexes[toColumn(fieldIndex)] += MAX_COL
+        ++stoneCount
     }
 
     private fun clearField(fieldIndex: Int) {
         playableFieldIndexes[toColumn(fieldIndex)] -= MAX_COL
         fields[fieldIndex].stone = Color.None
+        --stoneCount
     }
 
     //------------------------------------------------------------------------------------------------------------------
@@ -167,7 +170,12 @@ class Board() {
     }
 
     private fun colorHasWon(color: Color): Boolean {
-        return allGroups.any { grp -> grp.completeWithColor(color) }
+        if (fieldIndexesPlayedStack.isEmpty())
+            return allGroups.any { grp -> grp.completeWithColor(color) }
+        val field = getField(fieldIndexesPlayedStack.peek())
+        if (field.stone != color)
+            return false
+        return field.isPartOfCompleteGroupOfOneColor()
     }
 
     private fun determineWinner() : Color? {
@@ -181,7 +189,7 @@ class Board() {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    fun isPlayableField(fieldIndex: Int): Boolean {
+    private fun isPlayableField(fieldIndex: Int): Boolean {
         return (fieldIndex in 0 until MAX_FIELDS) && (toRow(fieldIndex) == 0 || fields[fieldIndex - MAX_COL].stone != Color.None)
     }
 
@@ -232,7 +240,12 @@ class Board() {
     }
 
     fun gameFinished(): Boolean {
-        return getMoves().isEmpty()
+        if (colorHasWon(Color.White) || colorHasWon(Color.Black))
+            return true
+        return stoneCount == MAX_FIELDS
+//
+//
+//        return getMoves().isEmpty()
     }
 
     //------------------------------------------------------------------------------------------------------------------
