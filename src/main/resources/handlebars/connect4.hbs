@@ -84,6 +84,12 @@
                         <td><div class="square"><input type="number" id="searchDepth" min="1" max="42" step="1" value="5" size="6"></div></td>
                     </tr>
                 </table>
+                <table class="table2">
+                    <tr>
+                        <td class="tableleft"><b>board id:</b></td>
+                        <td class="tableleft" id="boardId"></td>
+                    </tr>
+                </table>
             </div>
             <div class="grid-item">
                 <table class="table2">
@@ -96,11 +102,11 @@
                         <td class="tableleft" id="computerMove"></td>
                     </tr>
                     <tr>
-                        <td class="tableleft"><b>nodes:</b></td>
+                        <td class="tableleft"><b>Nodes:</b></td>
                         <td class="tableleft" id="nodesCount"></td>
                     </tr>
                     <tr>
-                        <td class="tableleft"><b>time:</b></td>
+                        <td class="tableleft"><b>Time:</b></td>
                         <td class="tableleft" id="timeSpend"></td>
                     </tr>
                 </table>
@@ -157,6 +163,7 @@
                 showWinner(board)
                 showActionButtons(board)
                 showComputerResult(board.searchResult)
+                showMiscellanious(board)
             }
 
             function showFields(board) {
@@ -178,6 +185,10 @@
                         }
                     }
                 }
+            }
+
+            function showMiscellanious(board) {
+                document.getElementById("boardId").innerText = board.boardString;
             }
 
             function showLastFieldPlayed(board) {
@@ -222,7 +233,7 @@
                         if (i > 0) {
                             s = s + "-"
                         }
-                        s = s + String.fromCharCode(65 + searchResult.moveSequence[i])
+                        s = s + String.fromCharCode(97 + searchResult.moveSequence[i].col) + String.fromCharCode(48 + searchResult.moveSequence[i].row + 1)
                     }
                     document.getElementById("computerMove").innerText = s
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue

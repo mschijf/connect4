@@ -45,31 +45,31 @@ internal class BoardTest {
     @Test
     fun testGetMoves() {
         assertEquals ( Board("______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("o______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("xo______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("o______").getMoves(), listOf(7, 1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("xo______").getMoves(), listOf(14, 1, 2, 3, 4, 5, 6) )
         assertEquals ( Board("xoxoxo______").getMoves(), listOf(1, 2, 3, 4, 5, 6) )
         assertEquals ( Board("xoxoxo_oxoxox__xxxooo_oooxxx_xxxooo_oooxxx").getMoves(), listOf(2) )
-        assertEquals ( Board("xoxoxo_x_xoxoxo_o_xoxoxo__xoxoxo").getMoves(), listOf(1,3,5) )
+        assertEquals ( Board("xoxoxo_x_xoxoxo_o_xoxoxo__xoxoxo").getMoves(), listOf(8,10,5) )
         assertEquals ( Board("xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo").getMoves(), emptyList<Int>() )
     }
 
     @Test
     fun testDoMove() {
         val board = Board("______")
-        board.doMove(0)
-        board.doMove(1)
-        board.doMove(0)
-        board.doMove(0)
-        board.doMove(6)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(1)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(6)
         assertEquals ( board.toString(),  "oox_x_____o")
     }
 
     @Test
     fun testIllegalMove() {
         val board = Board("oxoxox______")
-        assertThrows<Exception> {board.doMove(-1)}
-        assertThrows<Exception> {board.doMove(7)}
-        assertThrows<Exception> {board.doMove(0)}
+        assertThrows<Exception> {board.doMoveByColumn(-1)}
+        assertThrows<Exception> {board.doMoveByColumn(7)}
+        assertThrows<Exception> {board.doMoveByColumn(0)}
     }
 
     @Test

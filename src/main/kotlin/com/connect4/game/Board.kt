@@ -4,6 +4,7 @@ import java.util.*
 
 const val MAX_COL = 7
 const val MAX_ROW = 6
+const val MAX_FIELDS = MAX_COL * MAX_ROW
 const val CONNECT_NUMBER = 4
 
 const val SEPERATOR = '_'
@@ -11,12 +12,18 @@ const val WHITE_CHAR = 'o'
 const val BLACK_CHAR = 'x'
 val STONE_COLOR_CHAR_SET = setOf(WHITE_CHAR, BLACK_CHAR)
 
+fun toRow(fieldIndex: Int) = fieldIndex / MAX_COL
+fun toColumn(fieldIndex: Int) = fieldIndex % MAX_COL
+fun toCoordinate(fieldIndex: Int) = Coordinate(toColumn(fieldIndex), toRow(fieldIndex))
+fun toFieldIndex(col: Int, row: Int) = row * MAX_COL + col
+fun toFieldIndex(coordinate: Coordinate) = toFieldIndex(coordinate.col, coordinate.row)
+
 class Board() {
 
-    private val fields = Array(MAX_COL) { col -> Array(MAX_ROW) { row -> Field(column=col, row=row) } }
-    private val colHeights = Array(MAX_COL) { 0 }
+    private val fields = Array(MAX_FIELDS) { field -> Field(field) }
+    private val playableFieldIndexes = Array(MAX_COL) { i -> i }
     val allGroups = mutableListOf<Group>()
-    private val fieldsPlayedStack = Stack<Field>()
+    private val fieldIndexesPlayedStack = Stack<Int>()
     var whoisToMove: Color = Color.White ; private set
 
     init {
@@ -29,36 +36,39 @@ class Board() {
     private fun createHorizontalGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW) {
-                createGroup(listOf(fields[col][row], fields[col+1][row], fields[col+2][row], fields[col+3][row]), GroupType.horizontal)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row)], fields[toFieldIndex(col+2, row)], fields[toFieldIndex(col+3, row)]), GroupType.horizontal)
             }
         }
     }
     private fun createVerticalGroups() {
         for (col in 0 until MAX_COL) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col][row+1], fields[col][row+2], fields[col][row+3]), GroupType.vertical)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col, row+1)], fields[toFieldIndex(col, row+2)], fields[toFieldIndex(col, row+3)]), GroupType.vertical)
             }
         }
     }
     private fun createDiagonalSWNEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in 0 until MAX_ROW - (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col+1][row+1], fields[col+2][row+2], fields[col+3][row+3]), GroupType.diagonalSWNE)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row+1)], fields[toFieldIndex(col+2, row+2)], fields[toFieldIndex(col+3, row+3)]), GroupType.diagonalSWNE)
             }
         }
     }
     private fun createDiagonalNWSEGroups() {
         for (col in 0 until MAX_COL - (CONNECT_NUMBER-1)) {
             for (row in MAX_ROW-1 downTo (CONNECT_NUMBER-1)) {
-                createGroup(listOf(fields[col][row], fields[col+1][row-1], fields[col+2][row-2], fields[col+3][row-3]), GroupType.diagonalNWSE)
+                createGroup(listOf(fields[toFieldIndex(col, row)], fields[toFieldIndex(col+1, row-1)], fields[toFieldIndex(col+2, row-2)], fields[toFieldIndex(col+3, row-3)]), GroupType.diagonalNWSE)
             }
         }
     }
-    private fun createGroup(fieldList: List<Field>, groupType: GroupType) { //f1: Field, f2: Field, f3: Field, f4: Field
+
+    private fun createGroup(fieldList: List<Field>, groupType: GroupType) {
         val group = Group(fieldList, groupType)
         allGroups.add(group)
         fieldList.forEach { f -> f.addGroup(group)}
     }
+
+    //------------------------------------------------------------------------------------------------------------------
 
     constructor(boardString: String) : this() {
         if (!isCorrectBoardString(boardString) ) {
@@ -69,28 +79,6 @@ class Board() {
             throw Exception("Wrong balance of white and black stones")
         }
         determineWhoisToMove()
-    }
-
-    private fun isCorrectStoneColorBalance() : Boolean {
-        val nWhiteStones = fields.sumOf { col -> col.count { f -> f.stone == Color.White } }
-        val nBlackStones = fields.sumOf { col -> col.count { f -> f.stone == Color.Black } }
-        return (nWhiteStones == nBlackStones || nWhiteStones == (nBlackStones + 1) )
-    }
-
-    private fun determineWhoisToMove() {
-        whoisToMove = if (colHeights.sum() % 2 == 0) Color.White else Color.Black
-    }
-
-    private fun putStoneInColumn(column: Int, stoneColor: Color): Field {
-        val field = fields[column][colHeights[column]]
-        field.stone = stoneColor
-        ++colHeights[column]
-        return field
-    }
-
-    private fun removeStoneFromColumn(column: Int) {
-        --colHeights[column]
-        fields[column][colHeights[column]].stone = Color.None
     }
 
     private fun boardStringToBoardRepresentation(boardString:String) {
@@ -106,6 +94,10 @@ class Board() {
         for (ch in columnString) {
             putStoneInColumn(column, if (ch == WHITE_CHAR) Color.White else Color.Black)
         }
+    }
+
+    private fun putStoneInColumn(column: Int, stoneColor: Color) {
+        fillField(playableFieldIndexes[column], stoneColor)
     }
 
     private fun isCorrectBoardString(boardString:String): Boolean {
@@ -136,22 +128,42 @@ class Board() {
 
     private fun columnAsString(column:Int) : String {
         var result = ""
-        for (row in 0 until colHeights[column]) {
-            result += if (fields[column][row].stone == Color.White) WHITE_CHAR else BLACK_CHAR
+        for (fieldIndex in column until playableFieldIndexes[column] step MAX_COL) {
+            result += if (fields[fieldIndex].stone == Color.White) WHITE_CHAR else BLACK_CHAR
         }
         return result
     }
+
+    private fun isCorrectStoneColorBalance() : Boolean {
+        val nWhiteStones = fields.count { field -> field.stone == Color.White }
+        val nBlackStones = fields.count { field -> field.stone == Color.Black }
+        return (nWhiteStones == nBlackStones || nWhiteStones == (nBlackStones + 1) )
+    }
+
+    private fun determineWhoisToMove() {
+        whoisToMove = if (fields.count { field -> field.stone == Color.White } == fields.count { field -> field.stone == Color.Black }) Color.White else Color.Black
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+
+    private fun fillField(fieldIndex: Int, stoneColor: Color) {
+        fields[fieldIndex].stone = stoneColor
+        playableFieldIndexes[toColumn(fieldIndex)] += MAX_COL
+    }
+
+    private fun clearField(fieldIndex: Int) {
+        playableFieldIndexes[toColumn(fieldIndex)] -= MAX_COL
+        fields[fieldIndex].stone = Color.None
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
 
     private fun swapPlayerToMove() {
         whoisToMove = opponentColor(whoisToMove)
     }
 
-    private fun isLegalMove(column: Int):Boolean {
-        return (column in 0 until MAX_COL) && (colHeights[column] < MAX_ROW)
-    }
-
-    private fun addFieldPlayed(field: Field) {
-        fieldsPlayedStack.push(field)
+    private fun addFieldIndexPlayed(fieldIndex: Int) {
+        fieldIndexesPlayedStack.push(fieldIndex)
     }
 
     private fun colorHasWon(color: Color): Boolean {
@@ -167,36 +179,53 @@ class Board() {
             null
     }
 
-    fun doMove(column: Int) {
-        if (!isLegalMove(column))
-            throw Exception("Illegal move")
-        val fieldPlayed = putStoneInColumn(column, whoisToMove)
-        swapPlayerToMove()
+    //------------------------------------------------------------------------------------------------------------------
 
-        addFieldPlayed(fieldPlayed)
+    fun isPlayableField(fieldIndex: Int): Boolean {
+        return (fieldIndex in 0 until MAX_FIELDS) && (toRow(fieldIndex) == 0 || fields[fieldIndex - MAX_COL].stone != Color.None)
+    }
+
+    fun doMoveUnchecked(fieldIndex: Int) {
+        fillField(fieldIndex, whoisToMove)
+        swapPlayerToMove()
+        addFieldIndexPlayed(fieldIndex)
+    }
+
+    fun doMove(fieldIndex: Int) {
+        if (!isPlayableField(fieldIndex))
+            throw Exception("Illegal move")
+        doMoveUnchecked(fieldIndex)
+    }
+
+    fun doMoveByColumn(column: Int) {
+        doMove(playableFieldIndexes[column])
+    }
+
+    fun doMoveByCoordinate(coordinate: Coordinate) {
+        doMove(toFieldIndex(coordinate))
     }
 
     fun undoMove()  {
-        if (fieldsPlayedStack.isEmpty())
+        if (fieldIndexesPlayedStack.isEmpty())
             throw Exception("Illegal takeback action")
-        val column = fieldsPlayedStack.pop().column
-        removeStoneFromColumn(column)
+        val fieldIndex = fieldIndexesPlayedStack.pop()
+        clearField(fieldIndex)
         swapPlayerToMove()
-    }
-
-    fun lastFieldPlayed() : Coordinate? {
-        return if(fieldsPlayedStack.isEmpty()) null else Coordinate(fieldsPlayedStack.peek().column, fieldsPlayedStack.peek().row)
     }
 
     fun getMoves(): List<Int> {
         if (colorHasWon(Color.White) || colorHasWon(Color.Black))
             return emptyList()
-        return colHeights.withIndex().filter { (_,height) -> height < MAX_ROW }.map { (column, _) -> column}
+        return playableFieldIndexes.filter { i -> i < MAX_FIELDS}
     }
 
-    fun getPlayableField(column: Int) : Field {
-        return fields[column][colHeights[column]]
+    //------------------------------------------------------------------------------------------------------------------
+
+    fun getField(fieldIndex: Int) : Field {
+        return fields[fieldIndex]
     }
+
+    //------------------------------------------------------------------------------------------------------------------
 
     fun playerToMoveHasLost(): Boolean {
         return colorHasWon(opponentColor(whoisToMove))
@@ -206,12 +235,18 @@ class Board() {
         return getMoves().isEmpty()
     }
 
-    fun getStoneColor(col: Int, row: Int) = fields[col][row].stone
+    //------------------------------------------------------------------------------------------------------------------
+
+    fun lastFieldPlayed() : Coordinate? {
+        return if(fieldIndexesPlayedStack.isEmpty()) null else toCoordinate(fieldIndexesPlayedStack.peek())
+    }
+
+    fun getStoneColor(col: Int, row: Int) = fields[toFieldIndex(col, row)].stone
 
     fun getWinningFields(): List<Coordinate> {
         val winner = determineWinner()
         if (winner != null) {
-            return allGroups.first { grp -> grp.completeWithColor(winner) }.fields.map { f -> Coordinate(f.column, f.row) }
+            return allGroups.first { grp -> grp.completeWithColor(winner) }.fields.map { f -> toCoordinate(f.fieldIndex) }
         }
         return emptyList()
     }

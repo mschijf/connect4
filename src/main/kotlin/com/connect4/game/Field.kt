@@ -1,6 +1,6 @@
 package com.connect4.game
 
-class Field (val column: Int, val row: Int) {
+class Field (val fieldIndex: Int) {
     var stone: Color = Color.None
         set(value) {
             val oldValue = field

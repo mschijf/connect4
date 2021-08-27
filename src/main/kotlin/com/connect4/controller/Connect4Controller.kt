@@ -2,7 +2,7 @@ package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
-import com.connect4.game.Genius
+import com.connect4.searchengine.Genius
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Template
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader
@@ -38,7 +38,7 @@ class Connect4Controller {
 
     @PostMapping("/move/{column}")
     fun doMove(@PathVariable(name = "column") column: Int): BoardModel {
-        board.doMove(column)
+        board.doMoveByColumn(column)
         return BoardModel(board)
     }
 
@@ -54,7 +54,7 @@ class Connect4Controller {
         if (searchResult.moveSequence.isEmpty()) {
             throw Exception("No move calculated")
         }
-        board.doMove(searchResult.moveSequence.first())
+        board.doMoveByCoordinate(searchResult.moveSequence.first())
         return BoardModel(board, searchResult)
     }
 

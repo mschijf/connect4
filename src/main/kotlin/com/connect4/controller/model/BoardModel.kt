@@ -1,6 +1,7 @@
 package com.connect4.controller.model
 
 import com.connect4.game.*
+import com.connect4.searchengine.SearchResult
 
 class BoardModel(board: Board, val searchResult: SearchResult?=null)  {
     val numberOfRows = MAX_ROW
@@ -16,12 +17,13 @@ class BoardModel(board: Board, val searchResult: SearchResult?=null)  {
         else
             Color.None
     val gameFinished = board.gameFinished()
-    val winningFields =  board.getWinningFields().map { f -> Coordinate(f.col, f.row) }.toList()
+    val winningFields =  board.getWinningFields()
     val takeBackPossible = board.lastFieldPlayed() != null
     val lastFieldPlayed = board.lastFieldPlayed()
+    val boardString = board.toString()
 
     private fun fieldPlayable(board: Board, col: Int, row: Int): Boolean {
-        if (board.getStoneColor(col, row) == Color.None)
+        if (!board.gameFinished() && board.getStoneColor(col, row) == Color.None)
             return (row == 0 || board.getStoneColor(col, row-1) != Color.None)
         return false
     }
@@ -29,4 +31,3 @@ class BoardModel(board: Board, val searchResult: SearchResult?=null)  {
 }
 
 data class FieldModel(val col: Int, val row: Int, val color: Color, val playable: Boolean)
-
