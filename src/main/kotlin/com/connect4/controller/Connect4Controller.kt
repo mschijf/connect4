@@ -2,62 +2,51 @@ package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
-import com.connect4.searchengine.Genius
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Template
 import com.github.jknack.handlebars.io.ClassPathTemplateLoader
 import com.github.jknack.handlebars.io.TemplateLoader
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class Connect4Controller {
-
-    var board = Board()
+class Connect4Controller @Autowired constructor(private val gameService: GameService) {
 
     @GetMapping("/")
     fun index(): String {
         val loader: TemplateLoader = ClassPathTemplateLoader("/handlebars", ".hbs")
         val handlebars = Handlebars(loader)
         val template: Template = handlebars.compile("connect4")
-        return template.apply(BoardModel(board))
+        return template.apply(BoardModel(Board())) //todo: apply with smaller object: only board.fields and nrOfRows or something like that
     }
 
     @GetMapping("/board/")
     fun getBoard(): BoardModel {
-        return BoardModel(board)
+        return gameService.getBoard(1)
     }
 
     @PostMapping("/board/")
     fun newBoard(): BoardModel {
-        board = Board()
-        return BoardModel(board)
+        return gameService.getNewBoard(1)
     }
 
     @PostMapping("/move/{column}")
     fun doMove(@PathVariable(name = "column") column: Int): BoardModel {
-        board.doMoveByColumn(column)
-        return BoardModel(board)
+        return gameService.doMove(1, column)
     }
 
     @PostMapping("/move/takeback/")
     fun takeBackLastMove(): BoardModel {
-        board.undoMove()
-        return BoardModel(board)
+        return gameService.takeBackLastMove(1)
     }
 
     @PostMapping("/move/compute/{level}")
     fun computeAndExecuteNextMove(@PathVariable(name = "level") level: Int): BoardModel {
-        val searchResult = Genius(board).computeMove(level)
-        if (searchResult.moveSequence.isEmpty()) {
-            throw Exception("No move calculated")
-        }
-        board.doMoveByCoordinate(searchResult.moveSequence.first())
-        return BoardModel(board, searchResult)
+        return gameService.computeAndExecuteNextMove(1, level)
     }
-
-
 }
+
 
