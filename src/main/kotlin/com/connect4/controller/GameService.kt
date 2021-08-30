@@ -8,28 +8,32 @@ import org.springframework.web.bind.annotation.PathVariable
 
 @Service
 class GameService {
-    private var board = Board()
+    private val boardMapper: MutableMap<Int, Board> = mutableMapOf()
 
     fun getBoard(gameId: Int): BoardModel {
+        val board = getBoardFromMapper(gameId)
         return BoardModel(board)
     }
 
     fun getNewBoard(gameId: Int): BoardModel {
-        board = Board()
+        val board = createNewBoardInMapper(gameId)
         return BoardModel(board)
     }
 
     fun doMove(gameId: Int, column: Int): BoardModel {
+        val board = getBoardFromMapper(gameId)
         board.doMoveByColumn(column)
         return BoardModel(board)
     }
 
     fun takeBackLastMove(gameId: Int): BoardModel {
+        val board = getBoardFromMapper(gameId)
         board.undoMove()
         return BoardModel(board)
     }
 
     fun computeAndExecuteNextMove(gameId: Int, @PathVariable(name = "level") level: Int): BoardModel {
+        val board = getBoardFromMapper(gameId)
         val searchResult = Genius(board).computeMove(level)
         if (searchResult.moveSequence.isEmpty()) {
             throw Exception("No move calculated")
@@ -38,5 +42,14 @@ class GameService {
         return BoardModel(board, searchResult)
     }
 
+    private fun getBoardFromMapper(gameId: Int): Board {
+        return boardMapper[gameId] ?: createNewBoardInMapper(gameId)
+    }
+
+    private fun createNewBoardInMapper(gameId: Int): Board {
+        val board = Board()
+        boardMapper[gameId] = board
+        return board
+    }
 
 }
