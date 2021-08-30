@@ -226,6 +226,10 @@
                 }
             }
 
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
             function showComputerResult(searchResult) {
                 if (searchResult != null) {
                     s = ""
@@ -237,8 +241,8 @@
                     }
                     document.getElementById("computerMove").innerText = s
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue
-                    document.getElementById("nodesCount").innerText = searchResult.nodesVisited
-                    document.getElementById("timeSpend").innerText = searchResult.durationMillis
+                    document.getElementById("nodesCount").innerText = numberWithCommas(searchResult.nodesVisited)
+                    document.getElementById("timeSpend").innerText = numberWithCommas(searchResult.durationMillis)
                 } else {
                     document.getElementById("computerMove").innerText = ""
                     document.getElementById("evaluationValue").innerText = ""

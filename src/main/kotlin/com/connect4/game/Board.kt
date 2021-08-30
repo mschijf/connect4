@@ -189,7 +189,7 @@ class Board() {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    private fun isPlayableField(fieldIndex: Int): Boolean {
+    fun isPlayableField(fieldIndex: Int): Boolean {
         return (fieldIndex in 0 until MAX_FIELDS) && (toRow(fieldIndex) == 0 || fields[fieldIndex - MAX_COL].stone != Color.None)
     }
 
@@ -222,7 +222,7 @@ class Board() {
     }
 
     fun getMoves(): List<Int> {
-        if (colorHasWon(Color.White) || colorHasWon(Color.Black))
+        if (colorHasWon(opponentColor(whoisToMove)))
             return emptyList()
         return playableFieldIndexes.filter { i -> i < MAX_FIELDS}
     }
@@ -243,9 +243,6 @@ class Board() {
         if (colorHasWon(Color.White) || colorHasWon(Color.Black))
             return true
         return stoneCount == MAX_FIELDS
-//
-//
-//        return getMoves().isEmpty()
     }
 
     //------------------------------------------------------------------------------------------------------------------
