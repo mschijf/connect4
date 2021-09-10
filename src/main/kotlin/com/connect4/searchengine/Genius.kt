@@ -38,10 +38,9 @@ class Genius(board: Board) {
         var bestMove:Int? = null
         var bestMoveSequence = ""
         val moves=generateMoves(killer[ply])
-        val newDepth = depth - 1  //if (moves.size == 1) depth else depth-1
         for (move in moves) {
             board.doMove(move)
-            val searchResult = alfabeta(newDepth, ply+1, -beta, -bestValue)
+            val searchResult = alfabeta(depth-1, ply+1, -beta, -bestValue)
             val value = -searchResult.evaluationValue
             board.undoMove()
             if (value > bestValue) {
@@ -71,15 +70,31 @@ class Genius(board: Board) {
                 if (blackCount == 0) {
                     when (whiteCount) {
                         1 -> whiteValue += 1
-                        2 -> whiteValue += 3
-                        3 -> whiteValue += 7
+                        2 -> {
+                            whiteValue += 3
+                            if (group.groupType == GroupType.Horizontal && group.getFirstEmptyField().isOdd)
+                                whiteValue += 5
+                        }
+                        3 -> {
+                            whiteValue += 7
+                            if (group.getFirstEmptyField().isOdd)
+                                whiteValue += 10
+                        }
                     }
                 }
                 if (whiteCount == 0) {
                     when (blackCount) {
                         1 -> blackValue += 1
-                        2 -> blackValue += 3
-                        3 -> blackValue += 7
+                        2 -> {
+                            blackValue += 3
+                            if (group.groupType == GroupType.Horizontal && group.getFirstEmptyField().isEven)
+                                blackValue += 5
+                        }
+                        3 -> {
+                            blackValue += 7
+                            if (group.getFirstEmptyField().isEven)
+                                blackValue += 10
+                        }
                     }
                 }
             }

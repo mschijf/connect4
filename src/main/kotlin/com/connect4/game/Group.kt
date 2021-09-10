@@ -24,5 +24,7 @@ class Group (val fields: List<Field>, val groupType: GroupType) {
     }
 
     fun countOfColor(color: Color) = if (color == Color.White) whiteCount else blackCount
+    fun getFirstEmptyField(): Field = fields.first { f -> f.stone == Color.None }
+
 
 }

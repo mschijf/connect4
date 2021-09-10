@@ -9,6 +9,9 @@ class Field (val fieldIndex: Int) {
         }
     private val groupList = mutableListOf<Group>()
 
+    val isOdd: Boolean = (fieldIndex / MAX_COL) % 2 == 0
+    val isEven: Boolean = !isOdd
+
     fun addGroup (group: Group) {
         groupList.add(group)
     }
@@ -20,4 +23,5 @@ class Field (val fieldIndex: Int) {
     fun isPartOfCompleteGroupOfOneColor() : Boolean {
         return stone != Color.None && groupList.any { grp -> grp.countOfColor(stone) == CONNECT_NUMBER }
     }
+
 }
