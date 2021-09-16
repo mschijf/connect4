@@ -12,61 +12,61 @@ internal class BoardTest {
     fun testEmptyBoardString() {
         val board = Board()
         val result = board.toString()
-        assertEquals(result, "______")
+        assertEquals(result, "------")
     }
 
     @Test
     fun testSeveralCorrectBoardString() {
-        assertEquals(Board("______").toString(), "______")
-        assertEquals(Board("x_x_o_x_o_o_o").toString(), "x_x_o_x_o_o_o")
-        assertEquals(Board("xoxox_x_o_x_o__o").toString(), "xoxox_x_o_x_o__o")
+        assertEquals(Board("------").toString(), "------")
+        assertEquals(Board("x-x-o-x-o-o-o").toString(), "x-x-o-x-o-o-o")
+        assertEquals(Board("xoxox-x-o-x-o--o").toString(), "xoxox-x-o-x-o--o")
     }
 
     @Test
     fun testWrongNumberOfColumns() {
         assertThrows<Exception> { Board("") }
-        assertThrows<Exception> { Board("_______") }
+        assertThrows<Exception> { Board("-------") }
     }
 
     @Test
     fun testTooManyStonesInColumn() {
-        assertThrows<Exception> { Board("xoxoxox_x_x_o_o_o_x") }
+        assertThrows<Exception> { Board("xoxoxox-x-x-o-o-o-x") }
     }
 
     @Test
     fun testWrongCharacters() {
-        assertThrows<Exception> { Board("_______") }
-        assertThrows<Exception> { Board("q_x_x_o_o_o_x") }
-        assertThrows<Exception> { Board("x_X_x_o_o_o_x") }
-        assertThrows<Exception> { Board("xoxoqox_x_x_o_o_o_x") }
-        assertThrows<Exception> { Board("xoxo0ox_x_x_o_o_o_x") }
+        assertThrows<Exception> { Board("-------") }
+        assertThrows<Exception> { Board("q-x-x-o-o-o-x") }
+        assertThrows<Exception> { Board("x-X-x-o-o-o-x") }
+        assertThrows<Exception> { Board("xoxoqox-x-x-o-o-o-x") }
+        assertThrows<Exception> { Board("xoxo0ox-x-x-o-o-o-x") }
     }
 
     @Test
     fun testGetMoves() {
-        assertEquals ( Board("______").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("o______").getMoves(), listOf(7, 1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("xo______").getMoves(), listOf(14, 1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("xoxoxo______").getMoves(), listOf(1, 2, 3, 4, 5, 6) )
-        assertEquals ( Board("xoxoxo_oxoxox__xxxooo_oooxxx_xxxooo_oooxxx").getMoves(), listOf(2) )
-        assertEquals ( Board("xoxoxo_x_xoxoxo_o_xoxoxo__xoxoxo").getMoves(), listOf(8,10,5) )
-        assertEquals ( Board("xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo_xoxoxo").getMoves(), emptyList<Int>() )
+        assertEquals ( Board("------").getMoves(), listOf(0, 1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("o------").getMoves(), listOf(7, 1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("xo------").getMoves(), listOf(14, 1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("xoxoxo------").getMoves(), listOf(1, 2, 3, 4, 5, 6) )
+        assertEquals ( Board("xoxoxo-oxoxox--xxxooo-oooxxx-xxxooo-oooxxx").getMoves(), listOf(2) )
+        assertEquals ( Board("xoxoxo-x-xoxoxo-o-xoxoxo--xoxoxo").getMoves(), listOf(8,10,5) )
+        assertEquals ( Board("xoxoxo-xoxoxo-xoxoxo-xoxoxo-xoxoxo-xoxoxo-xoxoxo").getMoves(), emptyList<Int>() )
     }
 
     @Test
     fun testDoMove() {
-        val board = Board("______")
+        val board = Board("------")
         board.doMoveByColumn(0)
         board.doMoveByColumn(1)
         board.doMoveByColumn(0)
         board.doMoveByColumn(0)
         board.doMoveByColumn(6)
-        assertEquals ( board.toString(),  "oox_x_____o")
+        assertEquals ( board.toString(),  "oox-x-----o")
     }
 
     @Test
     fun testIllegalMove() {
-        val board = Board("oxoxox______")
+        val board = Board("oxoxox------")
         assertThrows<Exception> {board.doMoveByColumn(-1)}
         assertThrows<Exception> {board.doMoveByColumn(7)}
         assertThrows<Exception> {board.doMoveByColumn(0)}
@@ -74,71 +74,71 @@ internal class BoardTest {
 
     @Test
     fun testConnect4() {
-        var board = Board("oooo_x_x_x___")
+        var board = Board("oooo-x-x-x---")
         assertTrue(board.playerToMoveHasLost())
-        board = Board("xxxx_o_o_o__o_")
+        board = Board("xxxx-o-o-o--o-")
         assertTrue(board.playerToMoveHasLost())
-        board = Board("__ox_ox_ox_o_")
+        board = Board("--ox-ox-ox-o-")
         assertTrue(board.playerToMoveHasLost())
-        board = Board("_o_xo_ox_oox_xoxx_")
+        board = Board("-o-xo-ox-oox-xoxx-")
         assertTrue(board.playerToMoveHasLost())
     }
 
 
     @Test
     fun testEmptyMoveString() {
-        val board = Board("______,")
+        val board = Board("------,")
         val result = board.toString()
-        assertEquals(result, "______")
+        assertEquals(result, "------")
     }
 
     @Test
     fun testWrongMoveStringFormat() {
-        assertThrows<Exception> { Board("______,h") }
-        assertThrows<Exception> { Board("______,0") }
-        assertThrows<Exception> { Board("______,A") }
-        assertThrows<Exception> { Board("______, a") }
+        assertThrows<Exception> { Board("------|h") }
+        assertThrows<Exception> { Board("------|0") }
+        assertThrows<Exception> { Board("------|A") }
+        assertThrows<Exception> { Board("------| a") }
     }
 
     @Test
     fun testLegalMoveString() {
-        val board = Board("______,abcdefg")
+        val board = Board("------|abcdefg")
         val result = board.toString()
-        assertEquals(result, "o_x_o_x_o_x_o")
+        assertEquals(result, "o-x-o-x-o-x-o")
     }
 
     @Test
     fun testLegalMoveStringOneColumn() {
-        val board = Board("______,aaaaaa")
+        val board = Board("------,aaaaaa")
         val result = board.toString()
-        assertEquals(result, "oxoxox______")
+        assertEquals(result, "oxoxox------")
     }
 
     @Test
     fun testTooMuchInOneColumn() {
-        assertThrows<Exception> { Board("oxoxox______,a") }
+        assertThrows<Exception> { Board("oxoxox------|a") }
     }
 
     @Test
     fun testBoardStatusString() {
-        val board = Board("______")
+        val board = Board("------")
         board.doMoveByColumn(0)
         board.doMoveByColumn(1)
         board.doMoveByColumn(0)
         board.doMoveByColumn(0)
         board.doMoveByColumn(6)
-        assertEquals ( board.toBoardStatusString(),  "______,abaag")
+        assertEquals ( board.toBoardStatusString(),  "------|abaag")
     }
 
     @Test
     fun testBoardStatusStringWithNotEmptyBoard() {
-        val board = Board("____ox__")
+        val board = Board("----ox--")
         board.doMoveByColumn(0)
         board.doMoveByColumn(1)
         board.doMoveByColumn(0)
         board.doMoveByColumn(0)
         board.doMoveByColumn(6)
-        assertEquals ( board.toBoardStatusString(),  "____ox__,abaag")
+        assertEquals ( board.toBoardStatusString(),  "----ox--|abaag")
     }
 
 }

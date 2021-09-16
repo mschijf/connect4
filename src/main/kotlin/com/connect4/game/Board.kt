@@ -7,11 +7,13 @@ const val MAX_ROW = 6
 const val MAX_FIELDS = MAX_COL * MAX_ROW
 const val CONNECT_NUMBER = 4
 
-const val SEPERATOR = '_'
+const val SEPERATOR = '|'
+const val COLUMN_SEPERATOR = '-'
 const val WHITE_CHAR = 'o'
 const val BLACK_CHAR = 'x'
 const val FIRST_COLUMN_CHAR = 'a'
 val STONE_COLOR_CHAR_SET = setOf(WHITE_CHAR, BLACK_CHAR)
+const val DEFAULT_BOARD = "------"
 
 fun toRow(fieldIndex: Int) = fieldIndex / MAX_COL
 fun toColumn(fieldIndex: Int) = fieldIndex % MAX_COL
@@ -20,7 +22,7 @@ fun toFieldIndex(col: Int, row: Int) = row * MAX_COL + col
 fun toFieldIndex(coordinate: Coordinate) = toFieldIndex(coordinate.col, coordinate.row)
 
 class Board() {
-    private var initialBoardString = "______"
+    private var initialBoardString = DEFAULT_BOARD
     private val fields = Array(MAX_FIELDS) { field -> Field(field) }
     private val playableFieldIndexes = Array(MAX_COL) { i -> i }
     val allGroups = mutableListOf<Group>()
@@ -75,7 +77,7 @@ class Board() {
 
     constructor(boardStatusString: String) : this() {
 
-        val parts = boardStatusString.split(",")
+        val parts = boardStatusString.split(SEPERATOR)
         if (parts.size !in 1..2) {
             throw Exception("Wrong Connect4 BoardStatusString format")
         }
@@ -96,7 +98,7 @@ class Board() {
     }
 
     private fun boardStringToBoardRepresentation(boardString:String) {
-        for ((columnNumber, columnString) in boardString.split(SEPERATOR).withIndex()) {
+        for ((columnNumber, columnString) in boardString.split(COLUMN_SEPERATOR).withIndex()) {
             setStonesFromColumnString(columnNumber, columnString)
         }
     }
@@ -115,7 +117,7 @@ class Board() {
     }
 
     private fun isCorrectBoardString(boardString:String): Boolean {
-        val parts = boardString.split(SEPERATOR)
+        val parts = boardString.split(COLUMN_SEPERATOR)
         if (parts.size != MAX_COL)
             return false
 
@@ -139,13 +141,13 @@ class Board() {
     override fun toString(): String {
         var result = columnAsString(0)
         for(column in 1 until MAX_COL) {
-            result += SEPERATOR + columnAsString(column)
+            result += COLUMN_SEPERATOR + columnAsString(column)
         }
         return result
     }
 
     fun toBoardStatusString(): String {
-        return initialBoardString + "," + fieldIndexesPlayedStack.map { i -> FIRST_COLUMN_CHAR + toColumn(i) }.joinToString("")
+        return initialBoardString + SEPERATOR + fieldIndexesPlayedStack.map { i -> FIRST_COLUMN_CHAR + toColumn(i) }.joinToString("")
     }
 
     private fun columnAsString(column:Int) : String {
