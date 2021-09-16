@@ -84,4 +84,61 @@ internal class BoardTest {
         assertTrue(board.playerToMoveHasLost())
     }
 
+
+    @Test
+    fun testEmptyMoveString() {
+        val board = Board("______,")
+        val result = board.toString()
+        assertEquals(result, "______")
+    }
+
+    @Test
+    fun testWrongMoveStringFormat() {
+        assertThrows<Exception> { Board("______,h") }
+        assertThrows<Exception> { Board("______,0") }
+        assertThrows<Exception> { Board("______,A") }
+        assertThrows<Exception> { Board("______, a") }
+    }
+
+    @Test
+    fun testLegalMoveString() {
+        val board = Board("______,abcdefg")
+        val result = board.toString()
+        assertEquals(result, "o_x_o_x_o_x_o")
+    }
+
+    @Test
+    fun testLegalMoveStringOneColumn() {
+        val board = Board("______,aaaaaa")
+        val result = board.toString()
+        assertEquals(result, "oxoxox______")
+    }
+
+    @Test
+    fun testTooMuchInOneColumn() {
+        assertThrows<Exception> { Board("oxoxox______,a") }
+    }
+
+    @Test
+    fun testBoardStatusString() {
+        val board = Board("______")
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(1)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(6)
+        assertEquals ( board.toBoardStatusString(),  "______,abaag")
+    }
+
+    @Test
+    fun testBoardStatusStringWithNotEmptyBoard() {
+        val board = Board("____ox__")
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(1)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(0)
+        board.doMoveByColumn(6)
+        assertEquals ( board.toBoardStatusString(),  "____ox__,abaag")
+    }
+
 }

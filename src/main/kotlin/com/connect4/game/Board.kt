@@ -10,6 +10,7 @@ const val CONNECT_NUMBER = 4
 const val SEPERATOR = '_'
 const val WHITE_CHAR = 'o'
 const val BLACK_CHAR = 'x'
+const val FIRST_COLUMN_CHAR = 'a'
 val STONE_COLOR_CHAR_SET = setOf(WHITE_CHAR, BLACK_CHAR)
 
 fun toRow(fieldIndex: Int) = fieldIndex / MAX_COL
@@ -19,13 +20,14 @@ fun toFieldIndex(col: Int, row: Int) = row * MAX_COL + col
 fun toFieldIndex(coordinate: Coordinate) = toFieldIndex(coordinate.col, coordinate.row)
 
 class Board() {
-
+    private var initialBoardString = "______"
     private val fields = Array(MAX_FIELDS) { field -> Field(field) }
     private val playableFieldIndexes = Array(MAX_COL) { i -> i }
     val allGroups = mutableListOf<Group>()
     private val fieldIndexesPlayedStack = Stack<Int>()
     var whoisToMove: Color = Color.White ; private set
     private var stoneCount = 0
+
 
     init {
         createHorizontalGroups()
@@ -71,15 +73,26 @@ class Board() {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    constructor(boardString: String) : this() {
-        if (!isCorrectBoardString(boardString) ) {
+    constructor(boardStatusString: String) : this() {
+
+        val parts = boardStatusString.split(",")
+        if (parts.size !in 1..2) {
+            throw Exception("Wrong Connect4 BoardStatusString format")
+        }
+        initialBoardString = parts[0]
+        val moveSequenceString = if (parts.size == 2) parts[1] else ""
+        if (!isCorrectBoardString(initialBoardString)) {
             throw Exception("Wrong Connect4 BoardString format")
         }
-        boardStringToBoardRepresentation(boardString)
+        if (!isCorrectMoveSequenceString(moveSequenceString)) {
+            throw Exception("Wrong Connect4 move sequence string format")
+        }
+        boardStringToBoardRepresentation(initialBoardString)
         if (!isCorrectStoneColorBalance()) {
             throw Exception("Wrong balance of white and black stones")
         }
         determineWhoisToMove()
+        executeMoves(moveSequenceString)
     }
 
     private fun boardStringToBoardRepresentation(boardString:String) {
@@ -119,12 +132,20 @@ class Board() {
         }
     }
 
+    private fun isCorrectMoveSequenceString(moveSequenceString: String): Boolean {
+        return moveSequenceString.all { ch -> ch - FIRST_COLUMN_CHAR < MAX_COL }
+    }
+
     override fun toString(): String {
         var result = columnAsString(0)
         for(column in 1 until MAX_COL) {
             result += SEPERATOR + columnAsString(column)
         }
         return result
+    }
+
+    fun toBoardStatusString(): String {
+        return initialBoardString + "," + fieldIndexesPlayedStack.map { i -> FIRST_COLUMN_CHAR + toColumn(i) }.joinToString("")
     }
 
     private fun columnAsString(column:Int) : String {
@@ -142,7 +163,15 @@ class Board() {
     }
 
     private fun determineWhoisToMove() {
-        whoisToMove = if (fields.count { field -> field.stone == Color.White } == fields.count { field -> field.stone == Color.Black }) Color.White else Color.Black
+        whoisToMove =
+            if (fields.count { field -> field.stone == Color.White } == fields.count { field -> field.stone == Color.Black })
+                Color.White
+            else
+                Color.Black
+    }
+
+    private fun executeMoves(moveSequenceString: String) {
+        moveSequenceString.forEach { ch -> doMoveByColumn(ch - FIRST_COLUMN_CHAR) }
     }
 
     //------------------------------------------------------------------------------------------------------------------
