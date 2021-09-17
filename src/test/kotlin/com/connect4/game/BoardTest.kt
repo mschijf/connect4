@@ -87,7 +87,7 @@ internal class BoardTest {
 
     @Test
     fun testEmptyMoveString() {
-        val board = Board("------,")
+        val board = Board("------|")
         val result = board.toString()
         assertEquals(result, "------")
     }
@@ -109,7 +109,7 @@ internal class BoardTest {
 
     @Test
     fun testLegalMoveStringOneColumn() {
-        val board = Board("------,aaaaaa")
+        val board = Board("------|aaaaaa")
         val result = board.toString()
         assertEquals(result, "oxoxox------")
     }

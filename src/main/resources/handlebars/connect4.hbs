@@ -253,7 +253,7 @@
         <script>
             function executeMove(columnNumber) {
                 var request = new XMLHttpRequest();
-                request.open("POST", "/move/" + columnNumber);
+                request.open("POST", "c4api/v1/move/" + columnNumber);
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -269,7 +269,7 @@
 
             function takebackLastMove() {
                 var request = new XMLHttpRequest();
-                request.open("POST", "/move/takeback/");
+                request.open("POST", "c4api/v1/move/takeback/");
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -282,7 +282,7 @@
             function computeMove() {
                 disableAllButtons()
                 var request = new XMLHttpRequest();
-                request.open("POST", "/move/compute/"+document.getElementById("searchDepth").value);
+                request.open("POST", "c4api/v1/move/compute/"+document.getElementById("searchDepth").value);
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -295,7 +295,7 @@
             function getBoard() {
                 var request = new XMLHttpRequest();
 
-                request.open("GET", "/board/");
+                request.open("GET", "c4api/v1/board/");
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -324,7 +324,7 @@
 
             function newGame() {
                 var request = new XMLHttpRequest();
-                request.open("POST",    "/board/");
+                request.open("POST", "c4api/v1/board/");
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
