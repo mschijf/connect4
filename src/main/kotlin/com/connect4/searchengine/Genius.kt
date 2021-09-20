@@ -11,7 +11,6 @@ class Genius(board: Board) {
     //copy board in order to prevent it from changing the board that is connected for other purposes (for instance front end)
     private val board = Board(board.toString())
     private var nodesVisited = 0
-    private val killer = Array(MAX_FIELDS)  {-1}
 
     fun computeMove(level:Int) : SearchResult {
         nodesVisited = 0
@@ -48,7 +47,6 @@ class Genius(board: Board) {
                 bestMove = move
                 bestMoveSequence = searchResult.moveSequence
                 if (bestValue > beta) {
-                    killer[ply] = move
                     break
                 }
             }

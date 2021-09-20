@@ -107,8 +107,12 @@
                         <td class="tableleft" id="nodesCount"></td>
                     </tr>
                     <tr>
-                        <td class="tableleft"><b>Time:</b></td>
+                        <td class="tableleft"><b>Time (ms):</b></td>
                         <td class="tableleft" id="timeSpend"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>Nodes/sec:</b></td>
+                        <td class="tableleft" id="nodesPerSecond"></td>
                     </tr>
                 </table>
             </div>
@@ -241,11 +245,13 @@
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue
                     document.getElementById("nodesCount").innerText = numberWithCommas(searchResult.nodesVisited)
                     document.getElementById("timeSpend").innerText = numberWithCommas(searchResult.durationMillis)
+                    document.getElementById("nodesPerSecond").innerText = numberWithCommas(searchResult.nodesPerSecond)
                 } else {
                     document.getElementById("computerMove").innerText = ""
                     document.getElementById("evaluationValue").innerText = ""
                     document.getElementById("nodesCount").innerText = ""
                     document.getElementById("timeSpend").innerText = ""
+                    document.getElementById("nodesPerSecond").innerText = ""
                 }
             }
         </script>
