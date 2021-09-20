@@ -8,7 +8,7 @@ class Genius(board: Board) {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
-    //copy board in order to prevent it from changing the board that is connected for other purpopses (for instance front end)
+    //copy board in order to prevent it from changing the board that is connected for other purposes (for instance front end)
     private val board = Board(board.toString())
     private var nodesVisited = 0
     private val killer = Array(MAX_FIELDS)  {-1}
@@ -37,7 +37,7 @@ class Genius(board: Board) {
         var bestValue = alfa
         var bestMove:Int? = null
         var bestMoveSequence = ""
-        val moves=generateMoves(killer[ply])
+        val moves=generateMoves()
         for (move in moves) {
             board.doMove(move)
             val searchResult = alfabeta(depth-1, ply+1, -beta, -bestValue)
@@ -69,31 +69,31 @@ class Genius(board: Board) {
                 val blackCount = group.countOfColor(Color.Black)
                 if (blackCount == 0) {
                     when (whiteCount) {
-                        1 -> whiteValue += 1
+                        1 -> whiteValue += 10
                         2 -> {
-                            whiteValue += 3
+                            whiteValue += 30
                             if (group.groupType == GroupType.Horizontal && group.getFirstEmptyField().isOdd)
-                                whiteValue += 5
+                                whiteValue += 50
                         }
                         3 -> {
-                            whiteValue += 7
+                            whiteValue += 70
                             if (group.getFirstEmptyField().isOdd)
-                                whiteValue += 10
+                                whiteValue += 100
                         }
                     }
                 }
                 if (whiteCount == 0) {
                     when (blackCount) {
-                        1 -> blackValue += 1
+                        1 -> blackValue += 10
                         2 -> {
-                            blackValue += 3
+                            blackValue += 30
                             if (group.groupType == GroupType.Horizontal && group.getFirstEmptyField().isEven)
-                                blackValue += 5
+                                blackValue += 50
                         }
                         3 -> {
-                            blackValue += 7
+                            blackValue += 70
                             if (group.getFirstEmptyField().isEven)
-                                blackValue += 10
+                                blackValue += 100
                         }
                     }
                 }
@@ -105,13 +105,21 @@ class Genius(board: Board) {
             blackValue - whiteValue
     }
 
-    private fun generateMoves(killerMove: Int) : List<Int> {
+    private fun generateMoves() : List<Int> {
+        val colorOpponent = opponentColor(board.whoisToMove)
         val moves=board.getMoves()
+        var preventFromLosingMove = -1
         for (move in moves) {
-            if (board.getField(move).isThread(Color.White) || board.getField(move).isThread(Color.Black)) {
+            if (board.getField(move).isThread(board.whoisToMove)) {
                 return listOf(move)
             }
+            if (board.getField(move).isThread(colorOpponent)) {
+                preventFromLosingMove = move
+            }
         }
-        return moves //.sortedBy {it != killerMove}
+        if (preventFromLosingMove >= 0) {
+            return listOf(preventFromLosingMove)
+        }
+        return moves
     }
 }
