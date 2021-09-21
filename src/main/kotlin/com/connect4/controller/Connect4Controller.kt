@@ -16,7 +16,7 @@ class Connect4Controller @Autowired constructor(private val gameService: GameSer
 
     @GetMapping("/board/")
     fun getBoard(@CookieValue(value = BOARD_COOKIE, defaultValue = DEFAULT_BOARD) boardStatusString: String): BoardModel {
-        val (model, persistanceString) = gameService.getBoard(boardStatusString)
+        val (model, _) = gameService.getBoard(boardStatusString)
         return model
     }
 
