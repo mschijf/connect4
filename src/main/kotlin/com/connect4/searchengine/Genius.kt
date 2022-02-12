@@ -11,6 +11,7 @@ class Genius(board: Board) {
     //copy board in order to prevent it from changing the board that is connected for other purposes (for instance front end)
     private val board = Board(board.toString())
     private var nodesVisited = 0
+    private val leafLevel = if (board.whoisToMove == Color.White) 0 else 1
 
     fun computeMove(level:Int) : SearchResult {
         nodesVisited = 0
@@ -31,15 +32,16 @@ class Genius(board: Board) {
             return InternalSearchResult("", endValue(depth))
         }
         if (depth <= 0) {
-            return InternalSearchResult("", evaluate())
+            return quiescence(ply, alfa, beta)
         }
         var bestValue = alfa
         var bestMove:Int? = null
         var bestMoveSequence = ""
         val moves=generateMoves()
+        val newDepth = if (moves.size == 1) depth else depth-1
         for (move in moves) {
             board.doMove(move)
-            val searchResult = alfabeta(depth-1, ply+1, -beta, -bestValue)
+            val searchResult = alfabeta(newDepth, ply+1, -beta, -bestValue)
             val value = -searchResult.evaluationValue
             board.undoMove()
             if (value > bestValue) {
@@ -56,6 +58,35 @@ class Genius(board: Board) {
 
     private fun endValue(depth: Int): Int {
         return if (board.playerToMoveHasLost()) -(1000 + depth) else 0
+    }
+
+    private fun quiescence(ply: Int, alfa: Int, beta: Int): InternalSearchResult {
+        ++nodesVisited
+        if (board.gameFinished()) {
+            return InternalSearchResult("", endValue(-1))
+        }
+        var moves = generateMoves()
+        if (moves.size > 1) {
+            if (ply % 2 == leafLevel)
+                return InternalSearchResult("", evaluate())
+            moves = listOf(moves[0])
+        }
+        var bestValue = alfa
+        var bestMove:Int? = null
+        var bestMoveSequence = ""
+        for (move in moves) {
+            board.doMove(move)
+            val searchResult = quiescence( ply+1, -beta, -bestValue)
+            val value = -searchResult.evaluationValue
+            board.undoMove()
+            if (value > bestValue) {
+                bestValue = value
+                if (bestValue > beta) {
+                    break
+                }
+            }
+        }
+        return InternalSearchResult("", bestValue)
     }
 
     private fun evaluate(): Int {
@@ -104,20 +135,22 @@ class Genius(board: Board) {
     }
 
     private fun generateMoves() : List<Int> {
-        val colorOpponent = opponentColor(board.whoisToMove)
-        val moves=board.getMoves()
         var preventFromLosingMove = -1
-        for (move in moves) {
+        val goodMoves: MutableList<Int> = ArrayList()
+        val colorOpponent = opponentColor(board.whoisToMove)
+        for (move in board.getMoves()) {
             if (board.getField(move).isThread(board.whoisToMove)) {
                 return listOf(move)
-            }
-            if (board.getField(move).isThread(colorOpponent)) {
+            } else if (board.getField(move).isThread(colorOpponent)) {
                 preventFromLosingMove = move
+            } else {
+                goodMoves.add(move)
             }
         }
-        if (preventFromLosingMove >= 0) {
-            return listOf(preventFromLosingMove)
+        return if (preventFromLosingMove >= 0) {
+            listOf(preventFromLosingMove)
+        } else {
+            goodMoves
         }
-        return moves
     }
 }
