@@ -72,8 +72,6 @@ class Genius(board: Board) {
             moves = listOf(moves[0])
         }
         var bestValue = alfa
-        var bestMove:Int? = null
-        var bestMoveSequence = ""
         for (move in moves) {
             board.doMove(move)
             val searchResult = quiescence( ply+1, -beta, -bestValue)
