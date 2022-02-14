@@ -12,7 +12,7 @@ class GeniusAStar(): IGenius {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
-    private var cleverBoard = CleverBoard()
+    private var cleverBoard = CleverBoard("")
     private val rootColor = cleverBoard.whoisToMove
     private val root = Node(0, -1, true)
     private var currentNode = root
@@ -20,7 +20,7 @@ class GeniusAStar(): IGenius {
     private var nodesVisited = 0
 
     override fun setBoard(board: Board) {
-        cleverBoard = CleverBoard(board)
+        cleverBoard = CleverBoard(board.toBoardStatusString())
     }
 
     override fun computeMove(level:Int) : SearchResult {

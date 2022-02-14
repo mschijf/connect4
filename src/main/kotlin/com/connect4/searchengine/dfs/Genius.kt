@@ -12,12 +12,12 @@ class Genius(): IGenius {
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
     //copy board in order to prevent it from changing the board that is connected for other purposes (for instance front end)
-    private var cleverBoard = CleverBoard()
+    private var cleverBoard = CleverBoard(DEFAULT_BOARD)
     private var leafLevel = 0
     private var nodesVisited = 0
 
     override fun setBoard(board: Board) {
-        cleverBoard = CleverBoard(board)
+        cleverBoard = CleverBoard(board.toBoardStatusString())
         leafLevel = if (cleverBoard.whoisToMove == Color.White) 0 else 1
     }
 

@@ -5,16 +5,7 @@ import com.connect4.game.Color
 import com.connect4.game.GroupType
 import com.connect4.game.opponentColor
 
-class CleverBoard: Board {
-
-    constructor() {
-        Board()
-    }
-
-    constructor(board: Board) {
-        Board(board.toBoardStatusString())
-    }
-
+class CleverBoard(boardStatusString: String): Board(boardStatusString) {
 
     fun endValue(depth: Int): Int {
         return if (playerToMoveHasLost()) -(1000 + depth) else 0
