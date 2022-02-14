@@ -2,12 +2,15 @@ package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
-import com.connect4.searchengine.Genius
+import com.connect4.searchengine.IGenius
+import com.connect4.searchengine.bfs.GeniusAStar
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.PathVariable
 
 @Service
 class GameService {
+    var genius: IGenius = GeniusAStar()
+
     fun getBoard(boardStatusString: String): Pair<BoardModel, String> {
         val board = Board(boardStatusString)
         return BoardModel(board) to board.toBoardStatusString()
@@ -32,7 +35,8 @@ class GameService {
 
     fun computeAndExecuteNextMove(boardStatusString: String, @PathVariable(name = "level") level: Int): Pair<BoardModel, String> {
         val board = Board(boardStatusString)
-        val searchResult = Genius(board).computeMove(level)
+        genius.setBoard(board)
+        val searchResult = genius.computeMove(level)
         if (searchResult.moveSequence.isEmpty()) {
             throw Exception("No move calculated")
         }

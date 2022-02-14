@@ -21,7 +21,7 @@ fun toCoordinate(fieldIndex: Int) = Coordinate(toColumn(fieldIndex), toRow(field
 fun toFieldIndex(col: Int, row: Int) = row * MAX_COL + col
 fun toFieldIndex(coordinate: Coordinate) = toFieldIndex(coordinate.col, coordinate.row)
 
-class Board() {
+open class Board() {
     private var initialBoardString = DEFAULT_BOARD
     private val fields = Array(MAX_FIELDS) { field -> Field(field) }
     private val playableFieldIndexes = Array(MAX_COL) { i -> i }
