@@ -12,7 +12,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GeniusPN : IGenius, Runnable {
+class GeniusPD : IGenius, Runnable {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
@@ -26,7 +26,7 @@ class GeniusPN : IGenius, Runnable {
 
 
     private val MAX_NODES_IN_MEMORY = 500_000_000
-    private val MAX_NODES_FOR_SEARCH = 5_000_000
+    private val MAX_NODES_PER_LEVEL =    500_000
 
     private var cleverBoard = CleverBoard(DEFAULT_BOARD)
     private var maxNodeColor = cleverBoard.whoisToMove
@@ -67,13 +67,13 @@ class GeniusPN : IGenius, Runnable {
 
     override fun computeMove(board: Board, level: Int): SearchResult {
         setBoard(board)
-        return computeMove()
+        return computeMove(level)
     }
 
-    private fun computeMove() : SearchResult {
+    private fun computeMove(level: Int) : SearchResult {
         newNodesCreated = 0
         val start = Instant.now()
-        val result = principalDeepeningSearch()
+        val result = principalDeepeningSearch(level)
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalResultToMoveList(result)
 
@@ -85,9 +85,9 @@ class GeniusPN : IGenius, Runnable {
         return SearchResult(moveList, result.evaluationValue, newNodesCreated, timePassed)
     }
 
-    private fun principalDeepeningSearch(): InternalSearchResult {
+    private fun principalDeepeningSearch(level: Int): InternalSearchResult {
         var currentNode = root
-        while (root.value > -7000 && root.value < 7000 && newNodesCreated < MAX_NODES_FOR_SEARCH && totalNodesCreated < MAX_NODES_IN_MEMORY) {
+        while (root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesCreated < MAX_NODES_IN_MEMORY) {
             currentNode = gotoMostPromisingNode(currentNode)
             expand(currentNode)
             currentNode = updateAncestors(currentNode)

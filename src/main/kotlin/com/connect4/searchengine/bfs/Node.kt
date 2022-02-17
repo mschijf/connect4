@@ -1,33 +1,33 @@
 package com.connect4.searchengine.bfs
 
 class Node(var value: Int, val move: Int, val maxNode: Boolean) {
-    var child: Node? = null;
-    var sibling: Node? = null;
+    var child: Node? = null
+    var sibling: Node? = null
 
     fun update() {
         this.value = if (maxNode) maxValueChildren() else minValueChildren()
     }
 
     private fun maxValueChildren() : Int {
-        var maxValue = -999999;
+        var maxValue = -999999
         var childNode = child
         while (childNode != null) {
             if (childNode.value > maxValue)
                 maxValue = childNode.value
             childNode = childNode.sibling
         }
-        return maxValue;
+        return maxValue
     }
 
     private fun minValueChildren() : Int {
-        var minValue = 999999;
+        var minValue = 999999
         var childNode = child
         while (childNode != null) {
             if (childNode.value < minValue)
                 minValue = childNode.value
             childNode = childNode.sibling
         }
-        return minValue;
+        return minValue
     }
 
     fun getChildWithEqualValue(): Node? {

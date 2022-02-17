@@ -7,7 +7,7 @@ import com.connect4.searchengine.SearchResult
 import java.time.Duration
 import java.time.Instant
 
-class Genius(): IGenius {
+class Genius: IGenius {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 

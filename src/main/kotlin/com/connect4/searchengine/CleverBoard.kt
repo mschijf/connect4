@@ -12,7 +12,7 @@ class CleverBoard(boardStatusString: String): Board(boardStatusString) {
     private val DRAW_IS_WIN_VALUE = 8_000
 
     fun evaluateFromColorPerspective(color: Color): Int {
-        var endVal: Int
+        val endVal: Int
         if (gameFinished()) {
             if (playerToMoveHasLost())
                 endVal = -WIN_VALUE

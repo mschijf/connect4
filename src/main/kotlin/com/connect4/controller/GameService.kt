@@ -3,13 +3,13 @@ package com.connect4.controller
 import com.connect4.controller.model.BoardModel
 import com.connect4.game.Board
 import com.connect4.searchengine.IGenius
-import com.connect4.searchengine.bfs.GeniusPN
+import com.connect4.searchengine.bfs.GeniusPD
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.PathVariable
 
 @Service
 class GameService {
-    var genius : IGenius = GeniusPN()
+    var genius : IGenius = GeniusPD()
 
     fun getBoard(boardStatusString: String): Pair<BoardModel, String> {
         val board = Board(boardStatusString)
