@@ -72,7 +72,7 @@ class Genius(): IGenius {
         var moves = cleverBoard.generateMoves()
         if (moves.size > 1) {
             if (ply % 2 == leafLevel)
-                return InternalSearchResult("", cleverBoard.evaluate())
+                return InternalSearchResult("", cleverBoard.evaluateFromPlayerToMovePerspective())
             moves = listOf(moves[0])
         }
         var bestValue = alfa

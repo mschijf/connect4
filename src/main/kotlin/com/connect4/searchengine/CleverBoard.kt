@@ -7,11 +7,29 @@ import com.connect4.game.opponentColor
 
 class CleverBoard(boardStatusString: String): Board(boardStatusString) {
 
-    fun endValue(depth: Int): Int {
-        return if (playerToMoveHasLost()) -(1000 + depth) else 0
+    private val WIN_VALUE = 10_000
+    private val DRAW_VALUE = 0
+    private val DRAW_IS_WIN_VALUE = 8_000
+
+    fun evaluateFromColorPerspective(color: Color): Int {
+        var endVal: Int
+        if (gameFinished()) {
+            if (playerToMoveHasLost())
+                endVal = -WIN_VALUE
+            else
+                endVal = if (color == Color.White) -DRAW_IS_WIN_VALUE else DRAW_IS_WIN_VALUE
+        } else {
+            endVal = evaluateFromPlayerToMovePerspective()
+        }
+        return if (color == whoisToMove) endVal else -endVal
     }
 
-    fun evaluate(): Int {
+
+    fun endValue(depth: Int): Int {
+        return if (playerToMoveHasLost()) -(WIN_VALUE + depth) else DRAW_VALUE
+    }
+
+    fun evaluateFromPlayerToMovePerspective(): Int {
         var whiteValue = 0
         var blackValue = 0
         for (group in allGroups) {

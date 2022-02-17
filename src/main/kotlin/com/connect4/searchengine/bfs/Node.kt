@@ -9,7 +9,7 @@ class Node(var value: Int, val move: Int, val maxNode: Boolean) {
     }
 
     private fun maxValueChildren() : Int {
-        var maxValue = -1000000;
+        var maxValue = -999999;
         var childNode = child
         while (childNode != null) {
             if (childNode.value > maxValue)
@@ -20,7 +20,7 @@ class Node(var value: Int, val move: Int, val maxNode: Boolean) {
     }
 
     private fun minValueChildren() : Int {
-        var minValue = 1000000;
+        var minValue = 999999;
         var childNode = child
         while (childNode != null) {
             if (childNode.value < minValue)
@@ -30,10 +30,60 @@ class Node(var value: Int, val move: Int, val maxNode: Boolean) {
         return minValue;
     }
 
-    fun getChildWithEqualValue(): Node {
-        var currentNode = child!!
-        while (currentNode.sibling != null && currentNode.value != this.value)
-            currentNode = currentNode.sibling!!
-        return currentNode!!
+    fun getChildWithEqualValue(): Node? {
+        var currentNode = child
+        while (currentNode != null && currentNode.value != this.value)
+            currentNode = currentNode.sibling
+        return currentNode
     }
+
+    private fun getAllChildsWithEqualValue(): List<Node> {
+        val resultList = mutableListOf<Node>()
+        var currentNode = child
+        while (currentNode != null) {
+            if (currentNode.value == this.value)
+                resultList += currentNode
+            currentNode = currentNode.sibling
+        }
+        return resultList
+    }
+
+    fun getChildWithEqualValueAndBiggestSubTree(): Node? {
+        var bestChild = child
+        var max = -1
+        for (child in getAllChildsWithEqualValue()) {
+            val childTreeCount = nodeCount(child)
+            if (childTreeCount > max) {
+                max = childTreeCount
+                bestChild = child
+            }
+        }
+        return bestChild
+    }
+
+    fun getChildWithEqualValueAndSmallestSubTree(): Node? {
+        var bestChild = child
+        var min = 999_999_999
+        for (child in getAllChildsWithEqualValue()) {
+            val childTreeCount = nodeCount(child)
+            if (childTreeCount < min) {
+                min = childTreeCount
+                bestChild = child
+            }
+        }
+        return bestChild
+    }
+
+    private fun nodeCount(root: Node): Int {
+        var count = 1
+        var p = root.child
+        while (p != null) {
+            count += nodeCount(p)
+            p = p.sibling
+        }
+        return count
+    }
+
+
+
 }
