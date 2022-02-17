@@ -16,12 +16,17 @@ class Genius(): IGenius {
     private var leafLevel = 0
     private var nodesVisited = 0
 
-    override fun setBoard(board: Board) {
+    private fun setBoard(board: Board) {
         cleverBoard = CleverBoard(board.toBoardStatusString())
         leafLevel = if (cleverBoard.whoisToMove == Color.White) 0 else 1
     }
 
-    override fun computeMove(level:Int) : SearchResult {
+    override fun computeMove(board: Board, level: Int): SearchResult {
+        setBoard(board)
+        return computeMove(level)
+    }
+
+    private fun computeMove(level:Int) : SearchResult {
         nodesVisited = 0
         val start = Instant.now()
         val result = alfabeta(level, 0, -1000000, 1000000)

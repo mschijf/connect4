@@ -40,7 +40,14 @@ class GeniusPN : IGenius, Runnable {
         initSearchTree()
     }
 
-    override fun setBoard(board: Board) {
+    private fun initSearchTree() {
+        maxNodeColor = cleverBoard.whoisToMove
+        nodeStack.clear()
+        root = Node(0, -1, true)
+        totalNodesCreated = 1
+    }
+
+    private fun setBoard(board: Board) {
         stopThreadThinking()
 
         val newRoot = findNodeByBoardString(board.toString())
@@ -51,33 +58,27 @@ class GeniusPN : IGenius, Runnable {
             totalNodesCreated = 1
         } else {
             if (newRoot != root) {
-                println("Thread thinking, treeSize when stopped: " + totalNodesCreated)
                 removeParentAndSiblingsOfRootChild(newRoot)
-                println("Thread thinking, treeSize after going to Child: " + totalNodesCreated)
             }
             root = newRoot
         }
         nodeStack.clear()
     }
 
-    private fun initSearchTree() {
-        maxNodeColor = cleverBoard.whoisToMove
-        nodeStack.clear()
-        root = Node(0, -1, true)
-        totalNodesCreated = 1
+    override fun computeMove(board: Board, level: Int): SearchResult {
+        setBoard(board)
+        return computeMove()
     }
 
-    override fun computeMove(level:Int) : SearchResult {
+    private fun computeMove() : SearchResult {
         newNodesCreated = 0
         val start = Instant.now()
         val result = principalDeepeningSearch()
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalResultToMoveList(result)
 
-        println("REAL thinking, treeSize : " + totalNodesCreated)
         if (root.child != null)
             removeParentAndSiblingsOfRootChild(root.getChildWithEqualValue()!!)
-        println("REAL thinking, treeSize after going to child: " + totalNodesCreated)
 
         startThreadThinking()
 
