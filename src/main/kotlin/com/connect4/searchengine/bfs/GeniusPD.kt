@@ -26,7 +26,7 @@ class GeniusPD : IGenius, Runnable {
 
 
     private val MAX_NODES_IN_MEMORY = 500_000_000
-    private val MAX_NODES_PER_LEVEL =    500_000
+    private val MAX_NODES_PER_LEVEL = v   500_000
 
     private var cleverBoard = CleverBoard(DEFAULT_BOARD)
     private var maxNodeColor = cleverBoard.whoisToMove
@@ -34,60 +34,72 @@ class GeniusPD : IGenius, Runnable {
     private val nodeStack = Stack<Node>()
 
     private var newNodesCreated = 0
-    private var totalNodesCreated = 0
+    private var totalNodesInTree = 0
 
     init {
-        initSearchTree()
+        initTree(DEFAULT_BOARD)
     }
 
-    private fun initSearchTree() {
+    private fun initTree(boardStatusString: String) {
+        cleverBoard = CleverBoard(boardStatusString)
         maxNodeColor = cleverBoard.whoisToMove
         nodeStack.clear()
         root = Node(0, -1, true)
-        totalNodesCreated = 1
+        totalNodesInTree = 1
     }
 
-    private fun setBoard(board: Board) {
-        stopThreadThinking()
+    private fun findRootChildNodeByBoardString(boardString: String): Node? {
+        if (cleverBoard.toString() == boardString)
+            return root
 
-        val newRoot = findNodeByBoardString(board.toString())
-        if (newRoot == null) {
-            root = Node(0, -1, true)
-            cleverBoard = CleverBoard(board.toBoardStatusString())
-            maxNodeColor = cleverBoard.whoisToMove
-            totalNodesCreated = 1
-        } else {
-            if (newRoot != root) {
-                removeParentAndSiblingsOfRootChild(newRoot)
+        var p = root.child
+        while (p != null) {
+            cleverBoard.doMove(p.move)
+            val sameBoard = cleverBoard.toString() == boardString
+            cleverBoard.undoMove()
+            if (sameBoard) {
+                return p
             }
-            root = newRoot
+            p = p.sibling
         }
-        nodeStack.clear()
+        return null
     }
+
+    private fun determineNewRoot(board: Board) {
+        val newRoot = findRootChildNodeByBoardString(board.toString())
+        if (newRoot == null) {
+            initTree(board.toBoardStatusString())
+        } else if (newRoot != root) {
+            setRootToChild(newRoot)
+        } else { //newRoot == root
+            root = newRoot
+            nodeStack.clear()
+        }
+    }
+
+    //==================================================================================================================
 
     override fun computeMove(board: Board, level: Int): SearchResult {
-        setBoard(board)
-        return computeMove(level)
+        stopThreadThinking()
+        determineNewRoot(board)
+        val result = computeMove(level)
+        startThreadThinking()
+        return result
     }
 
     private fun computeMove(level: Int) : SearchResult {
-        newNodesCreated = 0
         val start = Instant.now()
         val result = principalDeepeningSearch(level)
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalResultToMoveList(result)
-
-        if (root.child != null)
-            removeParentAndSiblingsOfRootChild(root.getChildWithEqualValue()!!)
-
-        startThreadThinking()
-
+        setRootToChild(root.getChildWithEqualValue()!!) //todo: klopt niet, moet overeenkomen met eerste zet van movelist
         return SearchResult(moveList, result.evaluationValue, newNodesCreated, timePassed)
     }
 
     private fun principalDeepeningSearch(level: Int): InternalSearchResult {
+        newNodesCreated = 0
         var currentNode = root
-        while (root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesCreated < MAX_NODES_IN_MEMORY) {
+        while (root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesInTree < MAX_NODES_IN_MEMORY) {
             currentNode = gotoMostPromisingNode(currentNode)
             expand(currentNode)
             currentNode = updateAncestors(currentNode)
@@ -127,13 +139,12 @@ class GeniusPD : IGenius, Runnable {
         val moves = cleverBoard.generateMoves()
         for (move in moves) {
             cleverBoard.doMove(move)
-
             val eval = cleverBoard.evaluateFromColorPerspective(maxNodeColor)
+            cleverBoard.undoMove()
+
             val newChild = Node(eval, move, !currentNode.maxNode)
             ++newNodesCreated
-            ++totalNodesCreated
-
-            cleverBoard.undoMove()
+            ++totalNodesInTree
             if (lastChild == null)
                 currentNode.child = newChild
             else
@@ -174,14 +185,14 @@ class GeniusPD : IGenius, Runnable {
 
     //==================================================================================================================
 
-    private fun removeParentAndSiblingsOfRootChild(child: Node) {
-        --totalNodesCreated
+    private fun setRootToChild(rootChild: Node) {
+        --totalNodesInTree
         var p = root.child
-        while (p != null && p != child) {
+        while (p != null && p != rootChild) {
             val prev = p
             p = p.sibling
             val removed = removeSubTree(prev)
-            totalNodesCreated -= removed
+            totalNodesInTree -= removed
         }
         if (p == null) {
             throw Exception("can't find child")
@@ -192,13 +203,14 @@ class GeniusPD : IGenius, Runnable {
             val prev = p
             p = p.sibling
             val removed = removeSubTree(prev)
-            totalNodesCreated -= removed
+            totalNodesInTree -= removed
         }
 
-        cleverBoard.doMove(child.move)
+        cleverBoard.doMove(rootChild.move)
         root.child = null
-        root = child
+        root = rootChild
         root.sibling = null
+        nodeStack.clear()
     }
 
     private fun removeSubTree(subTreeRoot: Node): Int {
@@ -213,23 +225,6 @@ class GeniusPD : IGenius, Runnable {
             p = next
         }
         return removed
-    }
-
-    private fun findNodeByBoardString(boardString: String): Node? {
-        if (cleverBoard.toString() == boardString)
-            return root
-
-        var p = root.child
-        while (p != null) {
-            cleverBoard.doMove(p.move)
-            if (cleverBoard.toString() == boardString) {
-                cleverBoard.undoMove()
-                return p
-            }
-            cleverBoard.undoMove()
-            p = p.sibling
-        }
-        return null
     }
 
     //==================================================================================================================
@@ -254,7 +249,7 @@ class GeniusPD : IGenius, Runnable {
         threadStillRunning.set(true)
         running.set(true)
         var currentNode = root
-        while (running.get() && root.value > -7000 && root.value < 7000 && totalNodesCreated < MAX_NODES_IN_MEMORY) {
+        while (running.get() && root.value > -7000 && root.value < 7000 && totalNodesInTree < MAX_NODES_IN_MEMORY) {
             try {
                 currentNode = gotoMostPromisingNode(currentNode)
                 expand(currentNode)
