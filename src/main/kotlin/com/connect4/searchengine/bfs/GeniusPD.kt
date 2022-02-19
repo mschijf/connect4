@@ -90,7 +90,7 @@ class GeniusPD : IGenius, Runnable {
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalResultToMoveList(result)
         val value = if (root.maxNode) result.evaluationValue else -result.evaluationValue
-        if (moveList.size > 0) {
+        if (moveList.isNotEmpty()) {
             setRootToChild(root.getChildWithMove(toFieldIndex(moveList[0]))!!)
         }
         return SearchResult(moveList, value, newNodesCreated, timePassed)
