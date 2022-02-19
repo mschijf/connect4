@@ -1,9 +1,6 @@
 package com.connect4.searchengine.bfs
 
-import com.connect4.game.Board
-import com.connect4.game.Coordinate
-import com.connect4.game.DEFAULT_BOARD
-import com.connect4.game.toCoordinate
+import com.connect4.game.*
 import com.connect4.searchengine.CleverBoard
 import com.connect4.searchengine.IGenius
 import com.connect4.searchengine.SearchResult
@@ -26,7 +23,7 @@ class GeniusPD : IGenius, Runnable {
 
 
     private val MAX_NODES_IN_MEMORY = 500_000_000
-    private val MAX_NODES_PER_LEVEL = v   500_000
+    private val MAX_NODES_PER_LEVEL =     500_000
 
     private var cleverBoard = CleverBoard(DEFAULT_BOARD)
     private var maxNodeColor = cleverBoard.whoisToMove
@@ -92,8 +89,11 @@ class GeniusPD : IGenius, Runnable {
         val result = principalDeepeningSearch(level)
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalResultToMoveList(result)
-        setRootToChild(root.getChildWithEqualValue()!!) //todo: klopt niet, moet overeenkomen met eerste zet van movelist
-        return SearchResult(moveList, result.evaluationValue, newNodesCreated, timePassed)
+        val value = if (root.maxNode) result.evaluationValue else -result.evaluationValue
+        if (moveList.size > 0) {
+            setRootToChild(root.getChildWithMove(toFieldIndex(moveList[0]))!!)
+        }
+        return SearchResult(moveList, value, newNodesCreated, timePassed)
     }
 
     private fun principalDeepeningSearch(level: Int): InternalSearchResult {

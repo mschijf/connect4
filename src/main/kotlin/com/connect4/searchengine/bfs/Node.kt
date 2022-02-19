@@ -30,6 +30,13 @@ class Node(var value: Int, val move: Int, val maxNode: Boolean) {
         return minValue
     }
 
+    fun getChildWithMove(move: Int): Node? {
+        var currentNode = child
+        while (currentNode != null && currentNode.move != move)
+            currentNode = currentNode.sibling
+        return currentNode
+    }
+
     fun getChildWithEqualValue(): Node? {
         var currentNode = child
         while (currentNode != null && currentNode.value != this.value)
