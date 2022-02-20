@@ -1,15 +1,17 @@
 package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
+import com.connect4.controller.model.ComputeStatusInfo
 import com.connect4.game.Board
 import com.connect4.searchengine.IGenius
 import com.connect4.searchengine.bfs.GeniusPD
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.PathVariable
+import kotlin.random.Random
 
 @Service
 class GameService {
-    var genius : IGenius = GeniusPD()
+    var genius = GeniusPD()
 
     fun getBoard(boardStatusString: String): Pair<BoardModel, String> {
         val board = Board(boardStatusString)
@@ -43,4 +45,12 @@ class GameService {
         board.doMoveByCoordinate(searchResult.moveSequence.first())
         return BoardModel(board, searchResult) to board.toBoardStatusString()
     }
+
+    fun getComputeStatusInfo(boardStatusString: String): ComputeStatusInfo {
+        val result = genius.threadInfo()
+        return ComputeStatusInfo(result)
+    }
+
+
+
 }

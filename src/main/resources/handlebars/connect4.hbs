@@ -68,6 +68,11 @@
                 </table>
             </div>
             <div class="grid-item">
+                <table class="table2">
+                    <tr>
+                        <td class="tableleft" id="loggingInfo"></td>
+                    </tr>
+                </table>
             </div>
             <div class="grid-item">
                 <table>
@@ -169,13 +174,9 @@
             }
 
             function showFields(board) {
-                // board.fields.forEach((field, index) => {
-                //     field.row
-                // }));
                 for (let row = 0; row < board.fields.length; row++) {
                     for (let col = 0; col < board.fields[row].length; col++) {
                         var elem = document.getElementById(toFieldId(col, row));
-                        // elem.style.backgroundColor = toColor(board.fields[row][col].color);
                         setElementColor(elem, board.fields[row][col].color)
                         elem.innerText=""
                         if (board.fields[row][col].playable) {
@@ -232,16 +233,20 @@
                 return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             }
 
-            function showComputerResult(searchResult) {
-                if (searchResult != null) {
+            function moveSequenceToString(moveSequence) {
                     s = ""
-                    for (let i = 0; i < searchResult.moveSequence.length; i++) {
+                    for (let i = 0; i < moveSequence.length; i++) {
                         if (i > 0) {
                             s = s + "-"
                         }
-                        s = s + String.fromCharCode(97 + searchResult.moveSequence[i].col) + String.fromCharCode(48 + searchResult.moveSequence[i].row + 1)
+                        s = s + String.fromCharCode(97 + moveSequence[i].col) + String.fromCharCode(48 + moveSequence[i].row + 1)
                     }
-                    document.getElementById("computerMove").innerText = s
+                    return s
+            }
+
+            function showComputerResult(searchResult) {
+                if (searchResult != null) {
+                    document.getElementById("computerMove").innerText = moveSequenceToString(searchResult.moveSequence)
                     document.getElementById("evaluationValue").innerText = searchResult.evaluationValue
                     document.getElementById("nodesCount").innerText = numberWithCommas(searchResult.nodesVisited)
                     document.getElementById("timeSpend").innerText = numberWithCommas(searchResult.durationMillis)
@@ -253,6 +258,10 @@
                     document.getElementById("timeSpend").innerText = ""
                     document.getElementById("nodesPerSecond").innerText = ""
                 }
+            }
+
+            function showComputeStatusInfo(info) {
+                document.getElementById("loggingInfo").innerText = info.statusLine
             }
         </script>
 
@@ -312,6 +321,34 @@
                 request.send();
             }
 
+            function newGame() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "c4api/v1/board/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+
+            function getComputeStatusInfo() {
+                var request = new XMLHttpRequest();
+
+                request.open("GET", "c4api/v1/compute/info/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var info = JSON.parse(this.responseText);
+                        showComputeStatusInfo(info);
+                    }
+                };
+                request.send();
+            }
+
+            const myInterval = setInterval(getComputeStatusInfo, 1000);
+
             // const fetchBoardAsync = () => {
                 // mdn fetch
                 // return fetch('/board/', {
@@ -326,22 +363,6 @@
             //     // ...
             // }
 
-
-
-
-            function newGame() {
-                var request = new XMLHttpRequest();
-                request.open("POST", "c4api/v1/board/");
-                request.onreadystatechange = function() {
-                    if(this.readyState === 4 && this.status === 200) {
-                        var board = JSON.parse(this.responseText);
-                        showBoard(board);
-                    }
-                };
-                request.send();
-            }
         </script>
-
-
     </body>
 </html>

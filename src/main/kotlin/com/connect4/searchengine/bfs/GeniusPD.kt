@@ -8,17 +8,25 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.max
 
 class GeniusPD : IGenius, Runnable {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
-    private fun internalResultToMoveList(internalResult: InternalSearchResult): List<Coordinate> {
-        return internalResult.moveSequence
+    private fun internalMoveSequenceToMoveList(moveSequence: String): List<Coordinate> {
+        return moveSequence
             .split('-')
             .filter{s -> s.isNotEmpty()}
             .map{ s -> toCoordinate(s.toInt()) }
             .toList()
+    }
+    private fun internalMoveSequenceToString(moveSequence: String): String {
+        return moveSequence
+            .split('-')
+            .filter{s -> s.isNotEmpty()}
+            .map{ s -> toCoordinate(s.toInt()).toString() }
+            .joinToString(", ")
     }
 
 
@@ -76,6 +84,22 @@ class GeniusPD : IGenius, Runnable {
 
     //==================================================================================================================
 
+    fun threadInfo(): String {
+        if (!running.get())
+            return ""
+        val value = if (root.maxNode) root.value else -root.value
+        val colorToMoveString =
+            if (root.maxNode)
+                if (maxNodeColor == Color.White) "white" else "black"
+            else
+                if (maxNodeColor == Color.White) "black" else "white"
+
+        return "Looking for " + colorToMoveString +
+                ". Value: %5d".format(value)  +
+                "\nExpected move sequence: " + internalMoveSequenceToString(getMoveSequence(3)) +
+                "\n%,10d".format( totalNodesInTree) + " nodes in tree"
+    }
+
     override fun computeMove(board: Board, level: Int): SearchResult {
         stopThreadThinking()
         determineNewRoot(board)
@@ -85,25 +109,29 @@ class GeniusPD : IGenius, Runnable {
     }
 
     private fun computeMove(level: Int) : SearchResult {
+        running.set(true)
         val start = Instant.now()
         val result = principalDeepeningSearch(level)
         val timePassed = Duration.between(start, Instant.now()).toMillis()
-        val moveList = internalResultToMoveList(result)
+        val moveList = internalMoveSequenceToMoveList(result.moveSequence)
         val value = if (root.maxNode) result.evaluationValue else -result.evaluationValue
         if (moveList.isNotEmpty()) {
             setRootToChild(root.getChildWithMove(toFieldIndex(moveList[0]))!!)
         }
+        running.set(false)
         return SearchResult(moveList, value, newNodesCreated, timePassed)
     }
 
     private fun principalDeepeningSearch(level: Int): InternalSearchResult {
+        running.set(true)
         newNodesCreated = 0
         var currentNode = root
-        while (root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesInTree < MAX_NODES_IN_MEMORY) {
+        while (running.get() && root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesInTree < MAX_NODES_IN_MEMORY) {
             currentNode = gotoMostPromisingNode(currentNode)
             expand(currentNode)
             currentNode = updateAncestors(currentNode)
         }
+        running.set(false)
         backToRoot()
         return InternalSearchResult(getMoveSequence(), root.value)
     }
@@ -166,9 +194,14 @@ class GeniusPD : IGenius, Runnable {
     }
 
     private fun getMoveSequence() : String {
+        return getMoveSequence(999)
+    }
+
+    private fun getMoveSequence(maxLength: Int) : String {
+        var moveSequencelength = 0
         var p = root
         var moveSequence = ""
-        while (p.child != null) {
+        while (p.child != null && moveSequencelength < maxLength) {
             val bestChild =
                 if ((p.maxNode && p.value <= -8000) || (!p.maxNode && p.value >= 8000)) {
                     p.getChildWithEqualValueAndBiggestSubTree()
@@ -178,6 +211,7 @@ class GeniusPD : IGenius, Runnable {
                     p.getChildWithEqualValue()
                 }
             moveSequence = moveSequence + bestChild?.move.toString() + "-"
+            ++moveSequencelength
             p = bestChild!!
         }
         return moveSequence

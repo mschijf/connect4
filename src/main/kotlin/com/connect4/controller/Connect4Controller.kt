@@ -1,6 +1,7 @@
 package com.connect4.controller
 
 import com.connect4.controller.model.BoardModel
+import com.connect4.controller.model.ComputeStatusInfo
 import com.connect4.game.DEFAULT_BOARD
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
@@ -52,6 +53,12 @@ class Connect4Controller @Autowired constructor(private val gameService: GameSer
         httpServletResponse.addCookie(getNewCookie(persistanceString))
         return model
     }
+
+    @GetMapping("/compute/info/")
+    fun getComputeStatusInfo(@CookieValue(value = BOARD_COOKIE, defaultValue = DEFAULT_BOARD) boardStatusString: String): ComputeStatusInfo {
+        return gameService.getComputeStatusInfo(boardStatusString)
+    }
+
 
     private fun getNewCookie(persistanceString: String): Cookie {
         val cookie = Cookie(BOARD_COOKIE, persistanceString)
