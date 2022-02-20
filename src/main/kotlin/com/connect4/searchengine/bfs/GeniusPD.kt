@@ -8,30 +8,31 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.max
+
+private fun internalMoveSequenceToMoveList(moveSequence: String): List<Coordinate> {
+    return moveSequence
+        .split('-')
+        .filter{s -> s.isNotEmpty()}
+        .map{ s -> toCoordinate(s.toInt()) }
+        .toList()
+}
+
+private fun internalMoveSequenceToString(moveSequence: String): String {
+    return moveSequence
+        .split('-')
+        .filter { s -> s.isNotEmpty() }
+        .joinToString(", ") { s -> toCoordinate(s.toInt()).toString() }
+}
+
 
 class GeniusPD : IGenius, Runnable {
 
     data class InternalSearchResult (val moveSequence:String, val evaluationValue: Int)
 
-    private fun internalMoveSequenceToMoveList(moveSequence: String): List<Coordinate> {
-        return moveSequence
-            .split('-')
-            .filter{s -> s.isNotEmpty()}
-            .map{ s -> toCoordinate(s.toInt()) }
-            .toList()
-    }
-    private fun internalMoveSequenceToString(moveSequence: String): String {
-        return moveSequence
-            .split('-')
-            .filter{s -> s.isNotEmpty()}
-            .map{ s -> toCoordinate(s.toInt()).toString() }
-            .joinToString(", ")
-    }
 
+    //==================================================================================================================
 
     private val MAX_NODES_IN_MEMORY = 500_000_000
-    private val MAX_NODES_PER_LEVEL =     500_000
 
     private var cleverBoard = CleverBoard(DEFAULT_BOARD)
     private var maxNodeColor = cleverBoard.whoisToMove
@@ -40,6 +41,7 @@ class GeniusPD : IGenius, Runnable {
 
     private var newNodesCreated = 0
     private var totalNodesInTree = 0
+
 
     init {
         initTree(DEFAULT_BOARD)
@@ -52,6 +54,8 @@ class GeniusPD : IGenius, Runnable {
         root = Node(0, -1, true)
         totalNodesInTree = 1
     }
+
+    //==================================================================================================================
 
     private fun findRootChildNodeByBoardString(boardString: String): Node? {
         if (cleverBoard.toString() == boardString)
@@ -84,56 +88,114 @@ class GeniusPD : IGenius, Runnable {
 
     //==================================================================================================================
 
-    fun threadInfo(): String {
-        if (!running.get())
-            return ""
-        val value = if (root.maxNode) root.value else -root.value
-        val colorToMoveString =
-            if (root.maxNode)
-                if (maxNodeColor == Color.White) "white" else "black"
-            else
-                if (maxNodeColor == Color.White) "black" else "white"
+    private var statusInfo = ""
+    private fun setComputeStatusInfo() {
+        statusInfo =
+            if (!running.get())
+                ""
+            else {
+                val value = if (root.maxNode) root.value else -root.value
+                val colorToMoveString =
+                    if (root.maxNode)
+                        if (maxNodeColor == Color.White) "white" else "black"
+                    else
+                        if (maxNodeColor == Color.White) "black" else "white"
 
-        return "Looking for " + colorToMoveString +
-                ". Value: %5d".format(value)  +
-                "\nExpected move sequence: " + internalMoveSequenceToString(getMoveSequence(3)) +
-                "\n%,10d".format( totalNodesInTree) + " nodes in tree"
+                "Looking for " + colorToMoveString +
+                        ". Value: %5d".format(value) +
+                        "\nExpected move sequence: " + internalMoveSequenceToString(getMoveSequence(3)) +
+                        "\n%,10d".format(totalNodesInTree) + " nodes in tree"
+            }
     }
+
+    fun getComputeStatusInfo(): String {
+        return statusInfo
+    }
+
+    //==================================================================================================================
 
     override fun computeMove(board: Board, level: Int): SearchResult {
         stopThreadThinking()
         determineNewRoot(board)
-        val result = computeMove(level)
+        val result = computeMove(level*1000)
         startThreadThinking()
         return result
     }
 
-    private fun computeMove(level: Int) : SearchResult {
-        running.set(true)
+    private fun computeMove(milliSeconds: Int) : SearchResult {
         val start = Instant.now()
-        val result = principalDeepeningSearch(level)
+
+        newNodesCreated = 0
+        startThreadThinking()
+        thinkForMilliSeconds(milliSeconds)
+        stopThreadThinking()
+        val result = InternalSearchResult(getMoveSequence(), root.value)
+
         val timePassed = Duration.between(start, Instant.now()).toMillis()
         val moveList = internalMoveSequenceToMoveList(result.moveSequence)
         val value = if (root.maxNode) result.evaluationValue else -result.evaluationValue
         if (moveList.isNotEmpty()) {
             setRootToChild(root.getChildWithMove(toFieldIndex(moveList[0]))!!)
         }
-        running.set(false)
         return SearchResult(moveList, value, newNodesCreated, timePassed)
     }
 
-    private fun principalDeepeningSearch(level: Int): InternalSearchResult {
-        running.set(true)
-        newNodesCreated = 0
-        var currentNode = root
-        while (running.get() && root.value > -7000 && root.value < 7000 && newNodesCreated < level*MAX_NODES_PER_LEVEL && totalNodesInTree < MAX_NODES_IN_MEMORY) {
-            currentNode = gotoMostPromisingNode(currentNode)
-            expand(currentNode)
-            currentNode = updateAncestors(currentNode)
+    //------------------------------------------------------------------------------------------------------------------
+
+    private var worker: Thread? = null
+    private val running = AtomicBoolean(false)
+    private val threadStillRunning = AtomicBoolean(false)
+
+    private fun thinkForMilliSeconds(milliSeconds:Int) {
+        val times = milliSeconds / 10
+        repeat(times) {
+            Thread.sleep(10)
+            if (!running.get())
+                return
         }
+    }
+
+    private fun startThreadThinking() {
+        worker = Thread(this)
+        worker!!.start()
+    }
+
+    private fun stopThreadThinking() {
         running.set(false)
+        while(threadStillRunning.get()) {
+            Thread.sleep(1)
+        }
+    }
+
+    override fun run() {
+        threadStillRunning.set(true)
+        running.set(true)
+        principalDeepening()
+        running.set(false)
+        threadStillRunning.set(false)
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+
+    private fun principalDeepening() {
+        var iterationCount = 0
+        var currentNode = root
+        while (running.get() && root.value > -7000 && root.value < 7000 && totalNodesInTree < MAX_NODES_IN_MEMORY) {
+            if (++iterationCount >= 100000) {
+                setComputeStatusInfo()
+                iterationCount = 0
+            }
+
+            try {
+                currentNode = gotoMostPromisingNode(currentNode)
+                expand(currentNode)
+                currentNode = updateAncestors(currentNode)
+            } catch (e: InterruptedException){
+                Thread.currentThread().interrupt()
+                println("Thread was interrupted, Failed to complete operation")
+            }
+        }
         backToRoot()
-        return InternalSearchResult(getMoveSequence(), root.value)
     }
 
     private fun goDown(parent: Node, child: Node): Node {
@@ -261,39 +323,5 @@ class GeniusPD : IGenius, Runnable {
         return removed
     }
 
-    //==================================================================================================================
-
-    private var worker: Thread? = null
-    private val running = AtomicBoolean(false)
-    private val threadStillRunning = AtomicBoolean(false)
-
-    private fun startThreadThinking() {
-        worker = Thread(this)
-        worker!!.start()
-    }
-
-    private fun stopThreadThinking() {
-        running.set(false)
-        while(threadStillRunning.get()) {
-            Thread.sleep(1)
-        }
-    }
-
-    override fun run() {
-        threadStillRunning.set(true)
-        running.set(true)
-        var currentNode = root
-        while (running.get() && root.value > -7000 && root.value < 7000 && totalNodesInTree < MAX_NODES_IN_MEMORY) {
-            try {
-                currentNode = gotoMostPromisingNode(currentNode)
-                expand(currentNode)
-                currentNode = updateAncestors(currentNode)
-            } catch (e: InterruptedException){
-                Thread.currentThread().interrupt()
-                println("Thread was interrupted, Failed to complete operation")
-            }
-        }
-        backToRoot()
-        threadStillRunning.set(false)
-    }
 }
+
