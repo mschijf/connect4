@@ -90,22 +90,16 @@ class GeniusPD : IGenius, Runnable {
 
     private var statusInfo = ""
     private fun setComputeStatusInfo() {
-        statusInfo =
-            if (!running.get())
-                ""
-            else {
-                val value = if (root.maxNode) root.value else -root.value
-                val colorToMoveString =
-                    if (root.maxNode)
-                        if (maxNodeColor == Color.White) "white" else "black"
-                    else
-                        if (maxNodeColor == Color.White) "black" else "white"
-
-                "Looking for " + colorToMoveString +
-                        ". Value: %5d".format(value) +
-                        "\nExpected move sequence: " + internalMoveSequenceToString(getMoveSequence(3)) +
-                        "\n%,10d".format(totalNodesInTree) + " nodes in tree"
-            }
+        val value = if (root.maxNode) root.value else -root.value
+        val colorToMoveString =
+            if (root.maxNode)
+                if (maxNodeColor == Color.White) "white" else "black"
+            else
+                if (maxNodeColor == Color.White) "black" else "white"
+        statusInfo = "Looking for " + colorToMoveString +
+                "\nValue: %5d".format(value) +
+                "\nExpected move sequence: " + internalMoveSequenceToString(getMoveSequence(3)) +
+                "\n%,10d".format(totalNodesInTree) + " nodes in tree"
     }
 
     fun getComputeStatusInfo(): String {
@@ -178,6 +172,7 @@ class GeniusPD : IGenius, Runnable {
     //------------------------------------------------------------------------------------------------------------------
 
     private fun principalDeepening() {
+        setComputeStatusInfo()
         var iterationCount = 0
         var currentNode = root
         while (running.get() && root.value > -7000 && root.value < 7000 && totalNodesInTree < MAX_NODES_IN_MEMORY) {
@@ -195,6 +190,7 @@ class GeniusPD : IGenius, Runnable {
                 println("Thread was interrupted, Failed to complete operation")
             }
         }
+        setComputeStatusInfo()
         backToRoot()
     }
 
